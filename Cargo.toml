@@ -1,0 +1,10 @@
+[package]
+name = "multiseat-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+logind-zbus = "5.3.2"
+relm4 = { version = "0.10.0", features = ["libadwaita", "gnome_45"] }
+udev = "0.9.3"
+zbus = "5.12.0"
