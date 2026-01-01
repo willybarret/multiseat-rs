@@ -4,7 +4,7 @@ use relm4::{
 };
 
 use crate::app::config::info::{
-    APP_DESCRIPTION, APP_ID, APP_NAME, DEV_NAME, ISSUE_URL, VERSION, WEBSITE,
+    APP_DESCRIPTION, APP_NAME, DEV_NAME, ISSUE_URL, VERSION, WEBSITE,
 };
 use crate::app::icons::GTK_ICONS;
 

@@ -1,23 +1,19 @@
 use crate::app::components::device_card::{DeviceCard, DeviceCardOutput};
-use crate::app::services::logind::{DEFAULT_SEAT, attach_device_to_seat};
-use crate::app::utils::{Seat, filter_devices};
+use crate::app::services::logind::attach_device_to_seat;
+use crate::app::utils::filter_devices;
 use crate::app::{icons::GTK_ICONS, utils};
 use gtk::prelude::ButtonExt;
-use relm4::adw::gio;
 use relm4::adw::prelude::{GtkWindowExt, OrientableExt};
 use relm4::factory::{DynamicIndex, FactoryComponent};
 use relm4::prelude::FactoryVecDeque;
 use relm4::{
-    Component, ComponentController, ComponentParts, ComponentSender, Controller, FactorySender,
-    RelmIterChildrenExt, RelmWidgetExt, SimpleComponent,
+    Component, ComponentController, ComponentParts, ComponentSender, Controller, FactorySender, RelmWidgetExt, SimpleComponent,
     adw::{self},
     gtk::{
         self,
         prelude::{BoxExt, WidgetExt},
     },
 };
-use std::ffi::OsStr;
-use std::os::unix::raw::dev_t;
 
 pub struct ContentModel {
     selected_seat: String,

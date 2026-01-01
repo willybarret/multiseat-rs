@@ -1,6 +1,5 @@
 use crate::app::components::seat_dialog::{ListDialogComponent, ListDialogOutput};
 use crate::app::services::logind::DEFAULT_SEAT;
-use crate::app::utils::Seat;
 use crate::app::{
     AboutAction, FlushDevicesAction, ShortcutsAction,
     components::list_item::{ListItemModel, ListItemOutput},

@@ -1,14 +1,13 @@
-use std::path::Components;
 use crate::app::{
     icons::GTK_ICONS,
     utils::{Seat, SeatVariant},
 };
 use relm4::actions::ActionName;
 use relm4::adw::gio;
-use relm4::{ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent, actions::{ActionGroupName, RelmAction, RelmActionGroup}, gtk::{
+use relm4::{actions::{ActionGroupName, RelmAction, RelmActionGroup}, gtk::{
     self,
     prelude::{BoxExt, ListBoxRowExt, WidgetExt},
-}, menu, new_action_group, new_stateless_action, Component, ComponentController, FactorySender};
+}, new_action_group, new_stateless_action, Component, ComponentController, FactorySender};
 use relm4::adw::prelude::GtkWindowExt;
 use relm4::factory::{DynamicIndex, FactoryComponent, FactoryView};
 use crate::app::components::delete::{DeleteComponent, DeleteInit, DeleteOutput};

@@ -1,5 +1,4 @@
 use logind_zbus::{SomePath, manager::ManagerProxyBlocking};
-use udev::Device;
 use zbus::blocking;
 
 pub const DEFAULT_SEAT: &str = "seat0";
@@ -19,7 +18,7 @@ impl Connection {
 
 fn get_manager(
     connection: &blocking::Connection,
-) -> ManagerProxyBlocking {
+) -> ManagerProxyBlocking<'_> {
     ManagerProxyBlocking::new(connection)
         .expect("Couldn't create manager proxy")
 }

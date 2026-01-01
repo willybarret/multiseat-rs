@@ -3,7 +3,7 @@ use crate::app::utils::{Device, Port};
 use relm4::adw::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
 use relm4::factory::{DynamicIndex, FactoryComponent, FactoryVecDeque, FactoryView};
 use relm4::gtk::pango::EllipsizeMode;
-use relm4::{FactorySender, RelmWidgetExt, gtk, view};
+use relm4::{FactorySender, RelmWidgetExt, gtk};
 
 pub struct DeviceCard {
     device: Device,
