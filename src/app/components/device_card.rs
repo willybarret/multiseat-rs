@@ -1,4 +1,4 @@
-use crate::app::icons::GTK_ICONS;
+use crate::app::icons::GtkIcons;
 use crate::app::utils::{Device, Port};
 use relm4::adw::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
 use relm4::factory::{DynamicIndex, FactoryComponent, FactoryVecDeque, FactoryView};
@@ -46,9 +46,9 @@ impl FactoryComponent for DeviceCard {
 
     fn init_widgets(
         &mut self,
-        index: &Self::Index,
+        _index: &Self::Index,
         root: Self::Root,
-        returned_widget: &<Self::ParentWidget as FactoryView>::ReturnedWidget,
+        _returned_widget: &<Self::ParentWidget as FactoryView>::ReturnedWidget,
         sender: FactorySender<Self>,
     ) -> Self::Widgets {
         let ports_box = self.ports_factory.widget();
@@ -129,7 +129,7 @@ impl FactoryComponent for DeviceCard {
                 },
 
                 gtk::Button {
-                    set_icon_name: GTK_ICONS::SWITCH.as_str(),
+                    set_icon_name: GtkIcons::Switch.as_str(),
                     set_valign: gtk::Align::Center,
                     connect_clicked => DeviceCardInput::AttachDevice,
                 },

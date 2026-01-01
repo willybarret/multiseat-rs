@@ -8,22 +8,16 @@ use relm4::{
     Component, ComponentController, ComponentParts, ComponentSender, Controller, SimpleComponent,
     actions::{ActionGroupName, RelmAction, RelmActionGroup},
     adw::{self, prelude::AdwApplicationWindowExt},
-    gtk::{
-        self,
-        glib::object::Cast,
-        prelude::{WidgetExt},
-    },
+    gtk::{self, glib::object::Cast, prelude::WidgetExt},
     new_action_group, new_stateless_action,
 };
 
-use crate::app::{
-    components::{
-        about_dialog::AboutDialog,
-        content::{ContentInput, ContentModel, ContentOutput},
-        sidebar::{SidebarModel, SidebarOutput},
-    },
-};
 use crate::app::components::sidebar::SidebarInput;
+use crate::app::components::{
+    about_dialog::AboutDialog,
+    content::{ContentInput, ContentModel, ContentOutput},
+    sidebar::{SidebarModel, SidebarOutput},
+};
 use crate::app::services::logind::DEFAULT_SEAT;
 
 new_action_group!(pub(super) WindowActionGroup, "win");
@@ -76,19 +70,19 @@ impl SimpleComponent for App {
     ) -> ComponentParts<Self> {
         (init.initialize_styles)();
 
-        let sidebar_controller = SidebarModel::builder()
-            .launch(None)
-            .forward(sender.input_sender(), |output| match output {
-                SidebarOutput::SelectSeat(target_seat) => AppInput::SelectSeat(target_seat),
-            });
-
-        let content_controller =
-            ContentModel::builder()
-                .launch(DEFAULT_SEAT.to_string())
+        let sidebar_controller =
+            SidebarModel::builder()
+                .launch(None)
                 .forward(sender.input_sender(), |output| match output {
-                    ContentOutput::CollapseSidebar => AppInput::CollapseSidebar,
-                    ContentOutput::RefreshSeats => AppInput::RefreshSeats,
+                    SidebarOutput::SelectSeat(target_seat) => AppInput::SelectSeat(target_seat),
                 });
+
+        let content_controller = ContentModel::builder()
+            .launch(DEFAULT_SEAT.to_string())
+            .forward(sender.input_sender(), |output| match output {
+                ContentOutput::CollapseSidebar => AppInput::CollapseSidebar,
+                ContentOutput::RefreshSeats => AppInput::RefreshSeats,
+            });
 
         let about_dialog_controller = AboutDialog::builder()
             .launch(root.upcast_ref::<gtk::Window>().clone()) //
@@ -121,14 +115,14 @@ impl SimpleComponent for App {
             })
         };
 
-        let shortcuts_overlay_action = {
+        let _shortcuts_overlay_action = {
             // let shortcuts_overlay = widgets.shortcuts_overlay.clone();
             RelmAction::<ShortcutsAction>::new_stateless(move |_| {
                 // shortcuts_overlay.present();
             })
         };
 
-        let flush_devices_action = {
+        let _flush_devices_action = {
             let sender = model.about_dialog_controller.sender().clone();
 
             RelmAction::<FlushDevicesAction>::new_stateless(move |_| {
@@ -137,8 +131,8 @@ impl SimpleComponent for App {
         };
 
         actions.add_action(about_dialog_action);
-        // actions.add_action(shortcuts_overlay_action);
-        // actions.add_action(flush_devices_action);
+        // actions.add_action(_shortcuts_overlay_action);
+        // actions.add_action(_flush_devices_action);
 
         root.insert_action_group(WindowActionGroup::NAME, Some(&actions.into_action_group()));
 
@@ -153,9 +147,7 @@ impl SimpleComponent for App {
             AppInput::SelectSeat(target_seat) => self
                 .content_controller
                 .emit(ContentInput::ListSeatDevices(target_seat)),
-            AppInput::RefreshSeats => self
-                .sidebar_controller
-                .emit(SidebarInput::RefreshSeats),
+            AppInput::RefreshSeats => self.sidebar_controller.emit(SidebarInput::RefreshSeats),
         }
     }
 

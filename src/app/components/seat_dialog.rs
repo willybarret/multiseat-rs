@@ -1,6 +1,8 @@
-use relm4::{adw, gtk, Component, ComponentParts, ComponentSender, RelmWidgetExt};
-use relm4::adw::prelude::{BoxExt, ButtonExt, EntryBufferExtManual, EntryExt, GtkWindowExt, OrientableExt, WidgetExt};
-use crate::app::icons::GTK_ICONS;
+use crate::app::icons::GtkIcons;
+use relm4::adw::prelude::{
+    BoxExt, ButtonExt, EntryBufferExtManual, EntryExt, GtkWindowExt, OrientableExt, WidgetExt,
+};
+use relm4::{Component, ComponentParts, ComponentSender, RelmWidgetExt, adw, gtk};
 
 #[derive(Debug)]
 pub struct ListDialogComponent {
@@ -34,57 +36,57 @@ impl Component for ListDialogComponent {
     type CommandOutput = ();
 
     view! {
-		#[root]
-		adw::Window {
-			set_hide_on_close: true,
-			set_default_width: 320,
-			set_resizable: false,
-			set_modal: true,
+        #[root]
+        adw::Window {
+            set_hide_on_close: true,
+            set_default_width: 320,
+            set_resizable: false,
+            set_modal: true,
 
-			gtk::Box {
-				set_orientation: gtk::Orientation::Vertical,
+            gtk::Box {
+                set_orientation: gtk::Orientation::Vertical,
 
-				adw::HeaderBar {
-					set_show_end_title_buttons: true,
-					set_css_classes: &["flat"],
-					set_title_widget: Some(&gtk::Box::default())
-				},
-				gtk::Box {
-					set_orientation: gtk::Orientation::Vertical,
-					set_margin_all: 20,
-					set_spacing: 10,
-					gtk::Image {
-							set_icon_size: gtk::IconSize::Large,
-							set_icon_name: Some(match model.mode {
-								ListDialogMode::New => GTK_ICONS::ADD.as_str(),
-								ListDialogMode::Edit => GTK_ICONS::EDIT.as_str(),
-							}),
-					},
-					gtk::Label {
-						set_css_classes: &["title-4"],
-						set_label: match model.mode {
-							ListDialogMode::New => "You're about to add a seat.",
-							ListDialogMode::Edit => "You're about to rename this seat."
-						},
-					},
-					gtk::Label {
-						set_label: "Pick a descriptive name.",
-					},
-					#[name = "new_list_entry"]
-					gtk::Entry {
-						set_placeholder_text: Some("Seat name"),
-						set_buffer: &model.name,
-						connect_activate => ListDialogInput::HandleEntry,
-					},
-					gtk::Button {
-						set_css_classes: &["suggested-action"],
-						set_label: model.label.as_str(),
-						connect_clicked => ListDialogInput::HandleEntry,
-					},
-				}
-			}
-		}
-	}
+                adw::HeaderBar {
+                    set_show_end_title_buttons: true,
+                    set_css_classes: &["flat"],
+                    set_title_widget: Some(&gtk::Box::default())
+                },
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_margin_all: 20,
+                    set_spacing: 10,
+                    gtk::Image {
+                            set_icon_size: gtk::IconSize::Large,
+                            set_icon_name: Some(match model.mode {
+                                ListDialogMode::New => GtkIcons::Add.as_str(),
+                                ListDialogMode::Edit => GtkIcons::Edit.as_str(),
+                            }),
+                    },
+                    gtk::Label {
+                        set_css_classes: &["title-4"],
+                        set_label: match model.mode {
+                            ListDialogMode::New => "You're about to add a seat.",
+                            ListDialogMode::Edit => "You're about to rename this seat."
+                        },
+                    },
+                    gtk::Label {
+                        set_label: "Pick a descriptive name.",
+                    },
+                    #[name = "new_list_entry"]
+                    gtk::Entry {
+                        set_placeholder_text: Some("Seat name"),
+                        set_buffer: &model.name,
+                        connect_activate => ListDialogInput::HandleEntry,
+                    },
+                    gtk::Button {
+                        set_css_classes: &["suggested-action"],
+                        set_label: model.label.as_str(),
+                        connect_clicked => ListDialogInput::HandleEntry,
+                    },
+                }
+            }
+        }
+    }
 
     fn init(
         init: Self::Init,
@@ -109,12 +111,7 @@ impl Component for ListDialogComponent {
         ComponentParts { model, widgets }
     }
 
-    fn update(
-        &mut self,
-        message: Self::Input,
-        sender: ComponentSender<Self>,
-        root: &Self::Root,
-    ) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
         match message {
             ListDialogInput::HandleEntry => {
                 let name = self.name.text();
@@ -124,15 +121,15 @@ impl Component for ListDialogComponent {
                         sender
                             .output(ListDialogOutput::AddSeatToSidebar(name.to_string()))
                             .unwrap_or_default();
-                    },
+                    }
                     ListDialogMode::Edit => {
                         sender
                             .output(ListDialogOutput::RenameSeat(name.to_string()))
                             .unwrap_or_default();
-                    },
+                    }
                 }
                 root.close();
-            },
+            }
         }
     }
 }

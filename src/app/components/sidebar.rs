@@ -4,7 +4,7 @@ use crate::app::{
     AboutAction, FlushDevicesAction, ShortcutsAction,
     components::list_item::{ListItemModel, ListItemOutput},
     config::info::APP_NAME,
-    icons::GTK_ICONS,
+    icons::GtkIcons,
     utils,
     utils::SeatVariant,
 };
@@ -70,12 +70,12 @@ impl SimpleComponent for SidebarModel {
                     set_sensitive: false,
                     set_tooltip: "Not implemented yet!",
                     //
-                    set_icon_name: GTK_ICONS::ADD.as_str(),
+                    set_icon_name: GtkIcons::Add.as_str(),
                     connect_clicked => SidebarInput::OpenNewSeatDialog,
                 },
                 pack_end = &gtk::MenuButton {
                     set_tooltip: "Menu",
-                    set_icon_name: GTK_ICONS::MENU.as_str(),
+                    set_icon_name: GtkIcons::Menu.as_str(),
                     set_menu_model: Some(&primary_menu),
                 },
             },
@@ -166,8 +166,6 @@ impl SimpleComponent for SidebarModel {
                 ListItemOutput::DeleteSeat(seat_id) => SidebarInput::DeleteSeat(seat_id),
             });
 
-        primary_seats_factory.guard().push_back(initial_seats[0].clone());
-
         let mut secondary_seats_factory = FactoryVecDeque::<ListItemModel>::builder()
             .launch(gtk::ListBox::default())
             .forward(sender.input_sender(), |output| match output {
@@ -178,7 +176,9 @@ impl SimpleComponent for SidebarModel {
             });
 
         for seat in &initial_seats {
-            if matches!(seat.variant, SeatVariant::Secondary) {
+            if matches!(seat.variant, SeatVariant::Primary) {
+                primary_seats_factory.guard().push_back(seat.clone());
+            } else {
                 secondary_seats_factory.guard().push_back(seat.clone());
             }
         }
@@ -214,7 +214,9 @@ impl SimpleComponent for SidebarModel {
             }
             SidebarInput::AddSeatToSidebar(_) => {}
             SidebarInput::DeleteSeat(seat_id) => {
-                if !utils::delete_seat(seat_id) { return }
+                if !utils::delete_seat(seat_id) {
+                    return;
+                }
 
                 self.selected_seat_variant = SeatVariant::Primary;
                 sender
@@ -222,7 +224,7 @@ impl SimpleComponent for SidebarModel {
                     .unwrap_or_default();
 
                 sender.input(SidebarInput::RefreshSeats);
-            },
+            }
             SidebarInput::RefreshSeats => {
                 let mut guard = self.secondary_seats_factory.guard();
                 guard.clear();

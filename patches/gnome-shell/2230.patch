@@ -1,0 +1,52 @@
+From a6a7fd398f11f19153d512d2a619f40a0c217c29 Mon Sep 17 00:00:00 2001
+From: Myrrh Periwinkle <myrrhperiwinkle@qtmlabs.xyz>
+Date: Mon, 26 May 2025 10:10:31 +0700
+Subject: [PATCH 2/2] LoginDialog: Don't reset auth prompt while launching a
+ session
+
+https://gitlab.gnome.org/GNOME/gdm/-/merge_requests/291 changes GDM
+behavior to automatically switch back to the greeter session when a
+non-VT user session is opened. Detect this condition and avoid resetting
+the authentication prompt so the session launch isn't aborted.
+---
+diff --git a/js/gdm/loginDialog.js b/js/gdm/loginDialog.js
+index 3f2f512..221b5a8 100644
+--- a/js/gdm/loginDialog.js
++++ b/js/gdm/loginDialog.js
+@@ -672,6 +672,7 @@ export const LoginDialog = GObject.registerClass({
+ 
+         this._disableUserList = undefined;
+         this._userListLoaded = false;
++        this._gdmSessionStarted = false;
+ 
+         this._realmManager = new Realmd.Manager();
+         this._realmManager.connectObject('login-format-changed',
+@@ -1166,6 +1167,17 @@ export const LoginDialog = GObject.registerClass({
+     }
+ 
+     _loginScreenSessionActivated() {
++        // The login progress on non-VT seats will involve the greeter session
++        // being briefly switched away from then switched back to again.
++        // Therefore we must not reset the authentication prompt until after
++        // we actually launched the user session so we don't erroneously abort
++        // the session launch.
++        if (!this._gdmSessionStarted)
++            return;
++
++        this._gdmSessionStarted = false;
++
++        this._gdmSessionStarted = false;
+         if (this.opacity === 255 &&
+             this._authPrompt.verificationStatus === AuthPrompt.AuthPromptStatus.NOT_VERIFYING)
+             return;
+@@ -1251,6 +1263,7 @@ export const LoginDialog = GObject.registerClass({
+             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+             onComplete: () => {
+                 this._greeter.call_start_session_when_ready_sync(serviceName, true, null);
++                this._gdmSessionStarted = true;
+                 this._unbindOpacity();
+             },
+         });
+-- 
+GitLab
+

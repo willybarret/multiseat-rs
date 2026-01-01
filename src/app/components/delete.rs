@@ -1,6 +1,6 @@
-use relm4::{adw, gtk, Component, ComponentParts, RelmWidgetExt};
+use crate::app::icons::GtkIcons;
 use relm4::adw::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, WidgetExt};
-use crate::app::icons::GTK_ICONS;
+use relm4::{Component, ComponentParts, RelmWidgetExt, adw, gtk};
 
 #[derive(Debug)]
 pub struct DeleteComponent {
@@ -32,48 +32,48 @@ impl Component for DeleteComponent {
     type Init = DeleteInit;
 
     view! {
-		#[root]
-		adw::Window {
-			set_hide_on_close: true,
-			set_default_width: 320,
-			set_resizable: false,
-			set_modal: true,
+        #[root]
+        adw::Window {
+            set_hide_on_close: true,
+            set_default_width: 320,
+            set_resizable: false,
+            set_modal: true,
 
-			gtk::Box {
-				set_orientation: gtk::Orientation::Vertical,
-				adw::HeaderBar {
-					set_show_end_title_buttons: true,
-					set_css_classes: &["flat"],
-					set_title_widget: Some(&gtk::Box::default())
-				},
-				gtk::Box {
-					set_orientation: gtk::Orientation::Vertical,
-					set_margin_all: 20,
-					set_spacing: 10,
-					gtk::Image {
-						set_icon_size: gtk::IconSize::Large,
-						set_icon_name: Some(GTK_ICONS::WARNING.as_str()),
-					},
-					gtk::Label {
-						set_css_classes: &["title-4"],
-						set_label: model.warning.as_str(),
-					},
-					gtk::Label {
-						set_label: model.delete_warning.as_str(),
-					},
-					gtk::Button {
-						set_css_classes: &["destructive-action"],
-						set_label: "Delete",
-						connect_clicked => DeleteInput::Delete,
-					},
-					gtk::Button {
-						set_label: "Cancel",
-						connect_clicked => DeleteInput::Cancel,
-					},
-				}
-			}
-		}
-	}
+            gtk::Box {
+                set_orientation: gtk::Orientation::Vertical,
+                adw::HeaderBar {
+                    set_show_end_title_buttons: true,
+                    set_css_classes: &["flat"],
+                    set_title_widget: Some(&gtk::Box::default())
+                },
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_margin_all: 20,
+                    set_spacing: 10,
+                    gtk::Image {
+                        set_icon_size: gtk::IconSize::Large,
+                        set_icon_name: Some(GtkIcons::Warning.as_str()),
+                    },
+                    gtk::Label {
+                        set_css_classes: &["title-4"],
+                        set_label: model.warning.as_str(),
+                    },
+                    gtk::Label {
+                        set_label: model.delete_warning.as_str(),
+                    },
+                    gtk::Button {
+                        set_css_classes: &["destructive-action"],
+                        set_label: "Delete",
+                        connect_clicked => DeleteInput::Delete,
+                    },
+                    gtk::Button {
+                        set_label: "Cancel",
+                        connect_clicked => DeleteInput::Cancel,
+                    },
+                }
+            }
+        }
+    }
 
     fn update(
         &mut self,
@@ -85,7 +85,7 @@ impl Component for DeleteComponent {
             DeleteInput::Cancel => root.close(),
             DeleteInput::Delete => {
                 sender.output(DeleteOutput::Delete).unwrap_or_default();
-            },
+            }
         }
         root.close()
     }

@@ -1,13 +1,14 @@
 use crate::app::components::device_card::{DeviceCard, DeviceCardOutput};
 use crate::app::services::logind::attach_device_to_seat;
 use crate::app::utils::filter_devices;
-use crate::app::{icons::GTK_ICONS, utils};
+use crate::app::{icons::GtkIcons, utils};
 use gtk::prelude::ButtonExt;
 use relm4::adw::prelude::{GtkWindowExt, OrientableExt};
 use relm4::factory::{DynamicIndex, FactoryComponent};
 use relm4::prelude::FactoryVecDeque;
 use relm4::{
-    Component, ComponentController, ComponentParts, ComponentSender, Controller, FactorySender, RelmWidgetExt, SimpleComponent,
+    Component, ComponentController, ComponentParts, ComponentSender, Controller, FactorySender,
+    RelmWidgetExt, SimpleComponent,
     adw::{self},
     gtk::{
         self,
@@ -53,13 +54,13 @@ impl SimpleComponent for ContentModel {
                 pack_start = &gtk::Box {
                     set_spacing: 6,
                     gtk::Button {
-                        set_icon_name: GTK_ICONS::SIDEBAR.as_str(),
+                        set_icon_name: GtkIcons::Sidebar.as_str(),
                         connect_clicked => ContentInput::CollapseSidebar,
                     },
                     gtk::Button {
                         // TODO: Add refresh functionality
                         set_sensitive: false,
-                        set_icon_name: GTK_ICONS::RELOAD.as_str(),
+                        set_icon_name: GtkIcons::Reload.as_str(),
                         connect_clicked => ContentInput::RefreshContent,
                     }
                 },
@@ -251,7 +252,7 @@ impl Component for SelectionDialog {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
+    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             DialogInput::ShowForDevice(device) => {
                 self.target_item = device;

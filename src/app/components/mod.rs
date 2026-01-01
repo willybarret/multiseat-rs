@@ -1,7 +1,8 @@
 pub mod about_dialog;
 pub mod content;
+pub mod delete;
+pub mod device_card;
 pub mod list_item;
+pub mod seat_dialog;
 pub mod sidebar;
-mod seat_dialog;
-mod delete;
-pub(crate) mod device_card;
+

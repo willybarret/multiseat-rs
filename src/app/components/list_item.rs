@@ -1,16 +1,21 @@
+use crate::app::components::delete::{DeleteComponent, DeleteInit, DeleteOutput};
 use crate::app::{
-    icons::GTK_ICONS,
+    icons::GtkIcons,
     utils::{Seat, SeatVariant},
 };
 use relm4::actions::ActionName;
 use relm4::adw::gio;
-use relm4::{actions::{ActionGroupName, RelmAction, RelmActionGroup}, gtk::{
-    self,
-    prelude::{BoxExt, ListBoxRowExt, WidgetExt},
-}, new_action_group, new_stateless_action, Component, ComponentController, FactorySender};
 use relm4::adw::prelude::GtkWindowExt;
 use relm4::factory::{DynamicIndex, FactoryComponent, FactoryView};
-use crate::app::components::delete::{DeleteComponent, DeleteInit, DeleteOutput};
+use relm4::{
+    Component, ComponentController, FactorySender,
+    actions::{ActionGroupName, RelmAction, RelmActionGroup},
+    gtk::{
+        self,
+        prelude::{BoxExt, ListBoxRowExt, WidgetExt},
+    },
+    new_action_group, new_stateless_action,
+};
 
 new_action_group!(pub(super) ListItemActionGroup, "list-item");
 new_stateless_action!(DeleteSeatAction, ListItemActionGroup, "delete-seat");
@@ -57,12 +62,21 @@ impl FactoryComponent for ListItemModel {
         gtk::ListBoxRow::builder().build()
     }
 
-
-    fn init_model(seat: <Self as FactoryComponent>::Init, _: &<Self as FactoryComponent>::Index, _: FactorySender<Self>) -> Self {
+    fn init_model(
+        seat: <Self as FactoryComponent>::Init,
+        _: &<Self as FactoryComponent>::Index,
+        _: FactorySender<Self>,
+    ) -> Self {
         ListItemModel { seat }
     }
 
-    fn init_widgets(&mut self, index: &Self::Index, root: Self::Root, returned_widget: &<Self::ParentWidget as FactoryView>::ReturnedWidget, sender: FactorySender<Self>) -> Self::Widgets {
+    fn init_widgets(
+        &mut self,
+        _index: &Self::Index,
+        root: Self::Root,
+        _returned_widget: &<Self::ParentWidget as FactoryView>::ReturnedWidget,
+        sender: FactorySender<Self>,
+    ) -> Self::Widgets {
         let seat_id = self.seat.path.id().to_string();
         let delete = DeleteComponent::builder()
             .launch(DeleteInit {
@@ -95,10 +109,7 @@ impl FactoryComponent for ListItemModel {
         controller.connect_pressed(move |_, _, _, _| {
             // sender_pressed
             sender
-                .output(ListItemOutput::SelectSeat(
-                    seat_id.clone(),
-                    seat_variant,
-                ))
+                .output(ListItemOutput::SelectSeat(seat_id.clone(), seat_variant))
                 .unwrap_or_default();
         });
 
@@ -129,7 +140,7 @@ impl FactoryComponent for ListItemModel {
             .visible(matches!(seat_variant, SeatVariant::Secondary))
             .css_classes(vec!["flat".to_string(), "image-button".to_string()])
             .valign(gtk::Align::Center)
-            .icon_name(GTK_ICONS::VIEW_MORE.as_str())
+            .icon_name(GtkIcons::ViewMore.as_str())
             .menu_model(&menu_model)
             .build();
 
@@ -140,11 +151,8 @@ impl FactoryComponent for ListItemModel {
 
         let mut actions = RelmActionGroup::<ListItemActionGroup>::new();
 
-        let delete_seat_action = {
-            RelmAction::<DeleteSeatAction>::new_stateless(move |_| {
-                delete.widget().present()
-            })
-        };
+        let delete_seat_action =
+            { RelmAction::<DeleteSeatAction>::new_stateless(move |_| delete.widget().present()) };
 
         actions.add_action(delete_seat_action);
 

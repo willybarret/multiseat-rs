@@ -3,10 +3,8 @@ use relm4::{
     gtk::{self, prelude::GtkWindowExt},
 };
 
-use crate::app::config::info::{
-    APP_DESCRIPTION, APP_NAME, DEV_NAME, ISSUE_URL, VERSION, WEBSITE,
-};
-use crate::app::icons::GTK_ICONS;
+use crate::app::config::info::{APP_DESCRIPTION, APP_NAME, DEV_NAME, ISSUE_URL, VERSION, WEBSITE};
+use crate::app::icons::GtkIcons;
 
 type MainWindow = gtk::Window;
 
@@ -41,8 +39,8 @@ impl SimpleComponent for AboutDialog {
             .application_name(APP_NAME)
             // .icon_name(APP_ID)
             // .application_icon(APP_ID)
-            .icon_name(GTK_ICONS::MULTITASKING.as_str())
-            .application_icon(GTK_ICONS::MULTITASKING.as_str())
+            .icon_name(GtkIcons::Multitasking.as_str())
+            .application_icon(GtkIcons::Multitasking.as_str())
             .version(VERSION)
             .developer_name(DEV_NAME)
             .website(WEBSITE)

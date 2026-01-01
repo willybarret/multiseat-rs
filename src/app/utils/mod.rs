@@ -1,4 +1,4 @@
-use crate::app::icons::GTK_ICONS;
+use crate::app::icons::GtkIcons;
 use crate::app::services::logind::DEFAULT_SEAT;
 use crate::app::services::{self};
 use convert_case::ccase;
@@ -28,9 +28,9 @@ pub enum DeviceVariant {
 impl DeviceVariant {
     pub fn icon_name(&self) -> &'static str {
         match self {
-            DeviceVariant::GraphicsCard => GTK_ICONS::GRAPHICS_CARD.as_str(),
-            DeviceVariant::SoundCard => GTK_ICONS::SOUND_CARD.as_str(),
-            DeviceVariant::GenericDevice => GTK_ICONS::GENERIC_DEVICE.as_str(),
+            DeviceVariant::GraphicsCard => GtkIcons::GraphicsCard.as_str(),
+            DeviceVariant::SoundCard => GtkIcons::SoundCard.as_str(),
+            DeviceVariant::GenericDevice => GtkIcons::GenericDevice.as_str(),
         }
     }
 }
@@ -109,7 +109,7 @@ pub fn filter_devices(devices: Vec<udev::Device>) -> (Vec<Device>, Vec<Device>) 
     let mut other_devices: Vec<Device> = Vec::new();
 
     for device in devices {
-        let subsystem = to_string(&device.subsystem().unwrap_or_default());
+        let subsystem = to_string(device.subsystem().unwrap_or_default());
 
         match subsystem.as_str() {
             "drm" => handle_graphics_card(&mut graphics_cards, &device),
@@ -124,18 +124,22 @@ pub fn filter_devices(devices: Vec<udev::Device>) -> (Vec<Device>, Vec<Device>) 
 fn handle_graphics_card(cards: &mut Vec<Device>, device: &udev::Device) {
     let path = to_string(device.syspath().as_os_str());
 
-    if let Some(gpu) = cards.last_mut() {
-        if path.contains(&gpu.path) {
-            let name = to_string(device.sysname());
-            let clean_name = name.splitn(2, '-').nth(1).unwrap_or(&name).to_string();
+    if let Some(gpu) = cards.last_mut()
+        && path.contains(&gpu.path)
+    {
+        let name = to_string(device.sysname());
+        let clean_name = name
+            .split_once('-')
+            .map(|x| x.1)
+            .unwrap_or(&name)
+            .to_string();
 
-            let ports = gpu.ports.get_or_insert_with(Vec::new);
-            ports.push(Port {
-                name: clean_name,
-                path,
-            });
-            return;
-        }
+        let ports = gpu.ports.get_or_insert_with(Vec::new);
+        ports.push(Port {
+            name: clean_name,
+            path,
+        });
+        return;
     }
 
     cards.push(extract_details(
