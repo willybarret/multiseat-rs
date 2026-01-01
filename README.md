@@ -5,10 +5,28 @@ A blazingly fast, seamless multiseat manager for Linux, written in Rust.
 Tested on Fedora Workstation 43 (Wayland GNOME 49.2) with `gdm` and `gnome-shell` packages patched.
 
 ### Graphical User Interface
+
 ![](images/gui.png)
 
 ### Real-world Setup & Use Case
+
 ![](images/use-case.jpg)
+
+### ⚠️Known limitations
+
+**Single GPU setups**: I've been doing some research and found out that it's possible to do "multiseating"
+on Wayland using DRM leases of a single KMS device. Unfortunately, it's only a workaround that works on
+wlroots-based Compositors using `drm-lease-manager` under the hood and it still requires patching some
+packages to make everything work properly.
+
+Perhaps adding some kind of logical DRM implementation on the Kernel to split a physical DRM device should do it?
+(This is easier said than done tho). This would allow a more Compositor-agnostic solution, but you could
+also argue that the Compositor should be the one that allows using DRM Leases for different seats.
+
+For example, in the case of Mutter (GNOME's Compositor), it owns the DRM Master, just like `drm-lease-manager`
+does (the workaround I've mentioned earlier). Could be the answer, or not.
+
+Anyways, I'm going to drink some [Tereré](https://en.wikipedia.org/wiki/Terer%C3%A9) before continuing.
 
 ## To-Do List
 
@@ -34,7 +52,9 @@ cargo run
 Up to the present time, to enable multiseat support in GNOME, you must patch `gdm` and `gnome-shell`.
 The required files are located in the `patches/` directory of this repository.
 
-When this step becomes unnecessary (follow [(gnome-shell) Multiseat enablement for Wayland](https://gitlab.gnome.org/GNOME/gnome-shell/-/merge_requests/2230) if interested), these steps will be updated.
+When this step becomes unnecessary (
+follow [(gnome-shell) Multiseat enablement for Wayland](https://gitlab.gnome.org/GNOME/gnome-shell/-/merge_requests/2230)
+if interested), these steps will be updated.
 
 ### 1. Patching GDM
 
@@ -91,3 +111,4 @@ sudo dnf install ./noarch/<package-name>rpm ./x86_64/<package-name>.rpm
 *Note: A system reboot will be required after installing these patched packages.*
 
 Now you can start assigning devices to the seats you want with Multiseat Manager.
+
