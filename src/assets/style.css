@@ -1,0 +1,18 @@
+.static-list {
+    background-color: @card_bg_color;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.static-list row {
+    background-color: transparent;
+}
+.static-list row:hover {
+    background-color: transparent;
+    cursor: default;
+}
+.static-list row:active {
+    background-color: transparent;
+}
+.static-list row:last-child {
+    border-bottom-style: none;
+}

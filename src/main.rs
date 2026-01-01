@@ -1,8 +1,9 @@
 use relm4::RelmApp;
 mod app;
-use crate::app::{App, config::info::APP_ID};
+use crate::app::{App, config::info::APP_ID, AppInit};
 
 fn main() {
     let app = RelmApp::new(APP_ID);
-    app.run::<App>(());
+    let initialize_styles = Box::new(|| relm4::set_global_css(include_str!("assets/style.css")));
+    app.run::<App>(AppInit { initialize_styles });
 }

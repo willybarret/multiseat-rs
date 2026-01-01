@@ -1,9 +1,12 @@
 [package]
 name = "multiseat-rs"
+description = "A blazingly fast, seamless multiseat manager for Linux, written in Rust."
 version = "0.1.0"
 edition = "2024"
+authors = ["Willian Barreto"]
 
 [dependencies]
+convert_case = "0.10.0"
 logind-zbus = "5.3.2"
 relm4 = { version = "0.10.0", features = ["libadwaita", "gnome_45"] }
 udev = "0.9.3"
