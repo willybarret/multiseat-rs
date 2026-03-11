@@ -7,7 +7,7 @@ description = "A blazingly fast, seamless multiseat manager for Linux, written i
 license = "GPL-3.0"
 repository = "https://github.com/willybarret/multiseat-rs"
 readme = "README.md"
-keywords = ["multiseat", "linux", "gtk4", "systemd", "logind", "udev", "evdev", "zbus"]
+keywords = ["multiseat", "linux", "gtk4", "systemd"]
 categories = ["gui", "os::linux-apis"]
 exclude = ["patches/*", "images/*"]
 
