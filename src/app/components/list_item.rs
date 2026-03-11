@@ -3,34 +3,26 @@ use crate::app::{
     icons::GtkIcons,
     utils::{Seat, SeatVariant},
 };
-use relm4::actions::ActionName;
-use relm4::adw::gio;
-use relm4::adw::prelude::GtkWindowExt;
 use relm4::factory::{DynamicIndex, FactoryComponent, FactoryView};
 use relm4::{
-    Component, ComponentController, FactorySender,
-    actions::{ActionGroupName, RelmAction, RelmActionGroup},
+    Component, ComponentController, Controller, FactorySender,
     gtk::{
         self,
-        prelude::{BoxExt, ListBoxRowExt, WidgetExt},
+        prelude::{BoxExt, ButtonExt, GtkWindowExt, ListBoxRowExt, PopoverExt, WidgetExt},
     },
-    new_action_group, new_stateless_action,
 };
-
-new_action_group!(pub(super) ListItemActionGroup, "list-item");
-new_stateless_action!(DeleteSeatAction, ListItemActionGroup, "delete-seat");
-new_stateless_action!(RenameSeatAction, ListItemActionGroup, "rename-seat");
 
 #[derive(Debug)]
 pub struct ListItemModel {
     seat: Seat,
+    is_selected: bool,
 }
 
 pub type ListItemInit = Seat;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ListItemInput {
-    // SelectSeat,
+    UpdateSelection(String),
 }
 
 #[derive(Debug)]
@@ -43,9 +35,10 @@ pub type ListItemRoot = gtk::ListBoxRow;
 
 pub type ListItemParentWidget = gtk::ListBox;
 
-#[derive(Debug)]
 pub struct ListItemWidgets {
-    container: gtk::Box,
+    root: gtk::ListBoxRow,
+    #[allow(dead_code)]
+    delete_controller: Option<Controller<DeleteComponent>>,
 }
 
 impl FactoryComponent for ListItemModel {
@@ -67,7 +60,8 @@ impl FactoryComponent for ListItemModel {
         _: &<Self as FactoryComponent>::Index,
         _: FactorySender<Self>,
     ) -> Self {
-        ListItemModel { seat }
+        let is_selected = seat.path.id() == "seat0";
+        ListItemModel { seat, is_selected }
     }
 
     fn init_widgets(
@@ -77,27 +71,6 @@ impl FactoryComponent for ListItemModel {
         _returned_widget: &<Self::ParentWidget as FactoryView>::ReturnedWidget,
         sender: FactorySender<Self>,
     ) -> Self::Widgets {
-        let seat_id = self.seat.path.id().to_string();
-        let delete = DeleteComponent::builder()
-            .launch(DeleteInit {
-                warning: "You are about to delete this seat".into(),
-                delete_warning: "Devices will be attached to the Master seat.".into(),
-            })
-            .forward(sender.output_sender(), move |message| match message {
-                DeleteOutput::Delete => ListItemOutput::DeleteSeat(seat_id.clone()),
-            });
-
-        // let seat_id: String = self.seat.path.id().to_string();
-        // let sender_activate = sender.clone();
-        // root.connect_activate(move |root| {
-        //     sender_activate
-        //         .output(ListItemOutput::SelectSeat(
-        //             seat_id.clone(),
-        //             self.seat.variant,
-        //         ))
-        //         .unwrap_or_default();
-        // });
-
         let container = gtk::Box::builder()
             .css_classes(vec!["toolbar".to_string()])
             .build();
@@ -105,10 +78,9 @@ impl FactoryComponent for ListItemModel {
         let controller = gtk::GestureClick::new();
         let seat_id: String = self.seat.path.id().to_string();
         let seat_variant = self.seat.variant;
-        // let sender_pressed = sender.clone();
+        let sender_click = sender.clone();
         controller.connect_pressed(move |_, _, _, _| {
-            // sender_pressed
-            sender
+            sender_click
                 .output(ListItemOutput::SelectSeat(seat_id.clone(), seat_variant))
                 .unwrap_or_default();
         });
@@ -128,39 +100,79 @@ impl FactoryComponent for ListItemModel {
             .margin_bottom(5)
             .margin_start(5)
             .margin_end(5)
-            // watch label? (which can be renamed)
             .label(&self.seat.name)
             .build();
 
-        let menu_model = gio::Menu::new();
-        menu_model.append(Some("Rename"), Some(&RenameSeatAction::action_name()));
-        menu_model.append(Some("Delete"), Some(&DeleteSeatAction::action_name()));
+        let (delete_controller, menu_button) = if matches!(seat_variant, SeatVariant::Secondary) {
+            let seat_id_for_delete = self.seat.path.id().to_string();
+            let delete = DeleteComponent::builder()
+                .launch(DeleteInit {
+                    warning: "You are about to delete this seat".into(),
+                    delete_warning: "Devices will be attached to the Master seat.".into(),
+                })
+                .forward(sender.output_sender(), move |message| match message {
+                    DeleteOutput::Delete => ListItemOutput::DeleteSeat(seat_id_for_delete.clone()),
+                });
 
-        let list_actions = gtk::MenuButton::builder()
-            .visible(matches!(seat_variant, SeatVariant::Secondary))
-            .css_classes(vec!["flat".to_string(), "image-button".to_string()])
-            .valign(gtk::Align::Center)
-            .icon_name(GtkIcons::ViewMore.as_str())
-            .menu_model(&menu_model)
-            .build();
+            let popover = gtk::Popover::builder()
+                .has_arrow(true)
+                .build();
+            
+            let delete_btn = gtk::Button::builder()
+                .label("Delete")
+                .css_classes(vec!["flat".to_string()])
+                .build();
+            
+            popover.set_child(Some(&delete_btn));
+            
+            let delete_widget = delete.widget().clone();
+            let popover_clone = popover.clone();
+            delete_btn.connect_clicked(move |_| {
+                popover_clone.popdown();
+                delete_widget.present();
+            });
+
+            let btn = gtk::MenuButton::builder()
+                .visible(true)
+                .css_classes(vec!["flat".to_string(), "image-button".to_string()])
+                .valign(gtk::Align::Center)
+                .icon_name(GtkIcons::ViewMore.as_str())
+                .popover(&popover)
+                .build();
+
+            (Some(delete), btn)
+        } else {
+            let btn = gtk::MenuButton::builder()
+                .visible(false)
+                .build();
+            (None, btn)
+        };
 
         plugin_box.append(&label);
         container.append(&plugin_box);
-        container.append(&list_actions);
+        container.append(&menu_button);
+        
+        if self.is_selected {
+            root.add_css_class("selected-seat");
+        }
         root.set_child(Some(&container));
 
-        let mut actions = RelmActionGroup::<ListItemActionGroup>::new();
+        ListItemWidgets { root, delete_controller }
+    }
 
-        let delete_seat_action =
-            { RelmAction::<DeleteSeatAction>::new_stateless(move |_| delete.widget().present()) };
+    fn update(&mut self, msg: Self::Input, _sender: FactorySender<Self>) {
+        match msg {
+            ListItemInput::UpdateSelection(selected_id) => {
+                self.is_selected = self.seat.path.id() == selected_id;
+            }
+        }
+    }
 
-        actions.add_action(delete_seat_action);
-
-        root.insert_action_group(
-            ListItemActionGroup::NAME,
-            Some(&actions.into_action_group()),
-        );
-
-        ListItemWidgets { container }
+    fn update_view(&self, widgets: &mut Self::Widgets, _sender: FactorySender<Self>) {
+        if self.is_selected {
+            widgets.root.add_css_class("selected-seat");
+        } else {
+            widgets.root.remove_css_class("selected-seat");
+        }
     }
 }

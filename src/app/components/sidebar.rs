@@ -1,17 +1,15 @@
-use crate::app::components::seat_dialog::{ListDialogComponent, ListDialogOutput};
 use crate::app::services::logind::DEFAULT_SEAT;
 use crate::app::{
-    AboutAction, FlushDevicesAction, ShortcutsAction,
-    components::list_item::{ListItemModel, ListItemOutput},
+    AboutAction, FlushDevicesAction, RefreshAllAction, ShortcutsAction,
+    components::list_item::{ListItemInput, ListItemModel, ListItemOutput},
     config::info::APP_NAME,
     icons::GtkIcons,
     utils,
     utils::SeatVariant,
 };
-use relm4::adw::prelude::GtkWindowExt;
 use relm4::factory::FactoryVecDeque;
 use relm4::{
-    Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmWidgetExt,
+    ComponentParts, ComponentSender, RelmWidgetExt,
     SimpleComponent, adw,
     gtk::{
         self,
@@ -21,25 +19,26 @@ use relm4::{
 
 #[derive(Debug)]
 pub struct SidebarModel {
-    selected_seat_variant: SeatVariant,
+    selected_seat_id: String,
     has_secondary_seats: bool,
-    list_entry: Controller<ListDialogComponent>,
     secondary_seats_factory: FactoryVecDeque<ListItemModel>,
     primary_seats_factory: FactoryVecDeque<ListItemModel>,
 }
 
 #[derive(Debug)]
 pub enum SidebarInput {
-    OpenNewSeatDialog,
     SelectSeat(String, SeatVariant),
-    AddSeatToSidebar(String),
     DeleteSeat(String),
     RefreshSeats,
+    ResetToDefault,
+    OpenIdentifyDialog,
 }
 
 #[derive(Debug)]
 pub enum SidebarOutput {
     SelectSeat(String),
+    OpenIdentifyDialog,
+    SeatDeleted(bool, String),
 }
 
 pub type SidebarInit = Option<()>;
@@ -53,10 +52,13 @@ impl SimpleComponent for SidebarModel {
     menu! {
         primary_menu: {
             section! {
+                refresh_label => RefreshAllAction,
                 flush_devices_label => FlushDevicesAction,
+            },
+            section! {
                 keyboard_shortcuts_label => ShortcutsAction,
                 &about_label => AboutAction,
-            }
+            },
         }
     }
 
@@ -66,12 +68,9 @@ impl SimpleComponent for SidebarModel {
             add_top_bar = &adw::HeaderBar {
                 set_title_widget: Some(&gtk::Label::new(Some("Seats"))),
                 pack_start = &gtk::Button {
-                    //
-                    set_sensitive: false,
-                    set_tooltip: "Not implemented yet!",
-                    //
-                    set_icon_name: GtkIcons::Add.as_str(),
-                    connect_clicked => SidebarInput::OpenNewSeatDialog,
+                    set_icon_name: GtkIcons::Identify.as_str(),
+                    set_tooltip: "Identify input device",
+                    connect_clicked => SidebarInput::OpenIdentifyDialog,
                 },
                 pack_end = &gtk::MenuButton {
                     set_tooltip: "Menu",
@@ -92,17 +91,11 @@ impl SimpleComponent for SidebarModel {
                         set_css_classes: &["heading"],
                         set_text: "Primary",
                     },
-                    // HACK: I can't get set_header working to have different labels per group,
-                    // so I'm using two lists instead...
                     #[local_ref]
                     primary_list -> gtk::ListBox {
                         set_css_classes: &["boxed-list"],
                         set_margin_horizontal: 10,
-                        #[watch]
-                        set_selection_mode: match model.selected_seat_variant {
-                            SeatVariant::Primary => gtk::SelectionMode::Single,
-                            _ => gtk::SelectionMode::None,
-                        },
+                        set_selection_mode: gtk::SelectionMode::None,
                     },
                     gtk::Label {
                         set_margin_horizontal: 15,
@@ -125,11 +118,7 @@ impl SimpleComponent for SidebarModel {
                         set_visible: model.has_secondary_seats,
                         set_css_classes: &["boxed-list"],
                         set_margin_horizontal: 10,
-                        #[watch]
-                        set_selection_mode: match model.selected_seat_variant {
-                            SeatVariant::Secondary => gtk::SelectionMode::Single,
-                            _ => gtk::SelectionMode::None,
-                        },
+                        set_selection_mode: gtk::SelectionMode::None,
                     }
                 }
             },
@@ -146,16 +135,7 @@ impl SimpleComponent for SidebarModel {
         let about_label = format!("About {}", APP_NAME);
         let keyboard_shortcuts_label = "Keyboard Shortcuts";
         let flush_devices_label = "Revert to System Defaults";
-
-        let list_entry =
-            ListDialogComponent::builder()
-                .launch(None)
-                .forward(sender.input_sender(), |message| match message {
-                    ListDialogOutput::AddSeatToSidebar(name) => {
-                        SidebarInput::AddSeatToSidebar(name)
-                    }
-                    ListDialogOutput::RenameSeat(_) => todo!(),
-                });
+        let refresh_label = "Refresh";
 
         let mut primary_seats_factory = FactoryVecDeque::<ListItemModel>::builder()
             .launch(gtk::ListBox::default())
@@ -185,8 +165,7 @@ impl SimpleComponent for SidebarModel {
 
         let model = SidebarModel {
             has_secondary_seats: initial_seats.len() > 1,
-            selected_seat_variant: SeatVariant::Primary,
-            list_entry,
+            selected_seat_id: DEFAULT_SEAT.to_string(),
             primary_seats_factory,
             secondary_seats_factory,
         };
@@ -201,24 +180,32 @@ impl SimpleComponent for SidebarModel {
 
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
-            // FIXME: When clicking on gtk::MenuButton (aka SelectSeat event), selection mode doesn't work
-            SidebarInput::SelectSeat(target_seat, seat_variant) => {
-                self.selected_seat_variant = seat_variant;
+            SidebarInput::SelectSeat(target_seat, _seat_variant) => {
+                self.selected_seat_id = target_seat.clone();
+                
+                self.primary_seats_factory.broadcast(ListItemInput::UpdateSelection(target_seat.clone()));
+                self.secondary_seats_factory.broadcast(ListItemInput::UpdateSelection(target_seat.clone()));
+                
                 sender
                     .output(SidebarOutput::SelectSeat(target_seat))
                     .unwrap_or_default();
             }
-            SidebarInput::OpenNewSeatDialog => {
-                let list_entry = self.list_entry.widget();
-                list_entry.present();
-            }
-            SidebarInput::AddSeatToSidebar(_) => {}
             SidebarInput::DeleteSeat(seat_id) => {
-                if !utils::delete_seat(seat_id) {
+                let success = utils::delete_seat(seat_id.clone());
+                
+                sender
+                    .output(SidebarOutput::SeatDeleted(success, seat_id.clone()))
+                    .unwrap_or_default();
+                
+                if !success {
                     return;
                 }
 
-                self.selected_seat_variant = SeatVariant::Primary;
+                self.selected_seat_id = DEFAULT_SEAT.to_string();
+                
+                self.primary_seats_factory.broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
+                self.secondary_seats_factory.broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
+                
                 sender
                     .output(SidebarOutput::SelectSeat(DEFAULT_SEAT.into()))
                     .unwrap_or_default();
@@ -235,6 +222,25 @@ impl SimpleComponent for SidebarModel {
                         guard.push_back(seat.clone());
                     }
                 }
+            }
+            SidebarInput::ResetToDefault => {
+                self.selected_seat_id = DEFAULT_SEAT.to_string();
+                
+                self.primary_seats_factory.broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
+                self.secondary_seats_factory.broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
+                
+                sender
+                    .output(SidebarOutput::SelectSeat(DEFAULT_SEAT.into()))
+                    .unwrap_or_default();
+
+                // Small delay for logind to clean up empty seats after flush
+                std::thread::sleep(std::time::Duration::from_millis(100));
+                sender.input(SidebarInput::RefreshSeats);
+            }
+            SidebarInput::OpenIdentifyDialog => {
+                sender
+                    .output(SidebarOutput::OpenIdentifyDialog)
+                    .unwrap_or_default();
             }
         }
     }

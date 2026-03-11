@@ -1,18 +1,69 @@
 .static-list {
     background-color: @card_bg_color;
     border-radius: 12px;
-    overflow: hidden;
 }
 .static-list row {
     background-color: transparent;
 }
 .static-list row:hover {
     background-color: transparent;
-    cursor: default;
 }
 .static-list row:active {
     background-color: transparent;
 }
 .static-list row:last-child {
     border-bottom-style: none;
+}
+
+.card {
+    background-color: @card_bg_color;
+    border-radius: 12px;
+    padding: 0;
+}
+
+.vendor-badge {
+    background-color: @card_bg_color;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.boxed-list row.selected-seat {
+    background-color: alpha(@accent_bg_color, 0.12);
+}
+
+.success {
+    color: @success_color;
+}
+.warning {
+    color: @warning_color;
+}
+
+.warning.card {
+    background-color: alpha(@warning_color, 0.15);
+    padding: 12px;
+}
+.warning.card image {
+    color: @warning_color;
+}
+
+.seat-option,
+.seat-option:hover,
+.seat-option:active,
+.seat-option:focus {
+    border-radius: 0;
+}
+.boxed-list > row:first-child .seat-option,
+.boxed-list > row:first-child .seat-option:hover,
+.boxed-list > row:first-child .seat-option:active {
+    border-radius: 12px 12px 0 0;
+}
+.boxed-list > row:last-child .seat-option,
+.boxed-list > row:last-child .seat-option:hover,
+.boxed-list > row:last-child .seat-option:active {
+    border-radius: 0 0 12px 12px;
+}
+.boxed-list > row:only-child .seat-option,
+.boxed-list > row:only-child .seat-option:hover,
+.boxed-list > row:only-child .seat-option:active {
+    border-radius: 12px;
 }

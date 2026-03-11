@@ -76,28 +76,49 @@ pub fn get_seat_devices(target_seat: &str) -> Vec<udev::Device> {
     services::udev::get_seat_devices(target_seat)
 }
 
+/*
+ * Since DRM acts as the anchor for a seat, this function separates
+ * DRM devices from others and attempts to move non-DRM devices first.
+ */
 pub fn delete_seat(seat_id: String) -> bool {
     let devices = get_seat_devices(&seat_id);
-    let mut ok = true;
-
+    
+    let mut drm_devices = Vec::new();
+    let mut other_devices = Vec::new();
+    
     for device in devices {
-        if let Some(sys_path) = device.syspath().to_str() {
-            match services::logind::attach_device_to_seat(sys_path, DEFAULT_SEAT) {
-                Err(err) => {
-                    println!("Couldn't attach device: {}", err);
-                    ok = false;
-                    break;
-                }
-                Ok(_) => continue,
-            }
+        let subsystem = device.subsystem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("");
+        
+        if subsystem == "drm" {
+            drm_devices.push(device);
         } else {
-            println!("Device path is not valid UTF-8");
-            ok = false;
-            break;
+            other_devices.push(device);
         }
     }
-
-    ok
+    
+    let mut all_ok = true;
+    
+    for device in other_devices {
+        if let Some(sys_path) = device.syspath().to_str() {
+            if let Err(err) = services::logind::attach_device_to_seat(sys_path, DEFAULT_SEAT) {
+                println!("Couldn't attach device {}: {}", sys_path, err);
+                all_ok = false;
+            }
+        }
+    }
+    
+    for device in drm_devices {
+        if let Some(sys_path) = device.syspath().to_str() {
+            if let Err(err) = services::logind::attach_device_to_seat(sys_path, DEFAULT_SEAT) {
+                println!("Couldn't attach DRM device {}: {}", sys_path, err);
+                all_ok = false;
+            }
+        }
+    }
+    
+    all_ok
 }
 
 fn to_string(s: &OsStr) -> String {

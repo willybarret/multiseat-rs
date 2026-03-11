@@ -38,3 +38,10 @@ pub fn attach_device_to_seat(sysfs_path: &str, seat_id: &str) -> zbus::Result<()
 
     manager.attach_device(seat_id, sysfs_path, true)
 }
+
+pub fn flush_devices() -> zbus::Result<()> {
+    let connection = Connection::new().inner;
+    let manager = get_manager(&connection);
+
+    manager.flush_devices(true)
+}

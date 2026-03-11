@@ -1,5 +1,5 @@
-use crate::app::icons::GtkIcons;
-use crate::app::utils::{Device, Port};
+use crate::app::icons::{self, GtkIcons};
+use crate::app::utils::{Device, DeviceVariant, Port};
 use relm4::adw::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
 use relm4::factory::{DynamicIndex, FactoryComponent, FactoryVecDeque, FactoryView};
 use relm4::gtk::pango::EllipsizeMode;
@@ -77,10 +77,22 @@ impl FactoryComponent for DeviceCard {
                 set_orientation: gtk::Orientation::Horizontal,
                 set_spacing: 12,
 
-                gtk::Image {
-                    set_icon_name: Some(self.device.variant.icon_name()),
-                    set_pixel_size: 48,
+                gtk::Overlay {
                     set_valign: gtk::Align::Center,
+
+                    gtk::Image {
+                        set_icon_name: Some(self.device.variant.icon_name()),
+                        set_pixel_size: 48,
+                    },
+
+                    add_overlay = &gtk::Image {
+                        set_visible: matches!(self.device.variant, DeviceVariant::GraphicsCard)
+                            && icons::get_vendor_icon(&self.device.vendor).is_some(),
+                        set_icon_name: icons::get_vendor_icon(&self.device.vendor),
+                        set_pixel_size: 20,
+                        set_halign: gtk::Align::End,
+                        set_valign: gtk::Align::End,
+                    },
                 },
 
                 gtk::Box {

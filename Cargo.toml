@@ -1,12 +1,19 @@
 [package]
 name = "multiseat-rs"
-description = "A blazingly fast, seamless multiseat manager for Linux, written in Rust."
-version = "0.1.0"
+version = "0.9.0"
 edition = "2024"
 authors = ["Willian Barreto"]
+description = "A blazingly fast, seamless multiseat manager for Linux, written in Rust."
+license = "GPL-3.0"
+repository = "https://github.com/willybarret/multiseat-rs"
+readme = "README.md"
+keywords = ["multiseat", "linux", "gtk4", "systemd", "logind"]
+categories = ["gui", "os::linux-apis"]
+exclude = ["patches/*", "images/*"]
 
 [dependencies]
 convert_case = "0.10.0"
+evdev = "0.13"
 logind-zbus = "5.3.2"
 relm4 = { version = "0.10.0", features = ["libadwaita", "gnome_45"] }
 udev = "0.9.3"
