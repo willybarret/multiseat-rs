@@ -114,17 +114,15 @@ impl FactoryComponent for ListItemModel {
                     DeleteOutput::Delete => ListItemOutput::DeleteSeat(seat_id_for_delete.clone()),
                 });
 
-            let popover = gtk::Popover::builder()
-                .has_arrow(true)
-                .build();
-            
+            let popover = gtk::Popover::builder().has_arrow(true).build();
+
             let delete_btn = gtk::Button::builder()
                 .label("Delete")
                 .css_classes(vec!["flat".to_string()])
                 .build();
-            
+
             popover.set_child(Some(&delete_btn));
-            
+
             let delete_widget = delete.widget().clone();
             let popover_clone = popover.clone();
             delete_btn.connect_clicked(move |_| {
@@ -142,22 +140,23 @@ impl FactoryComponent for ListItemModel {
 
             (Some(delete), btn)
         } else {
-            let btn = gtk::MenuButton::builder()
-                .visible(false)
-                .build();
+            let btn = gtk::MenuButton::builder().visible(false).build();
             (None, btn)
         };
 
         plugin_box.append(&label);
         container.append(&plugin_box);
         container.append(&menu_button);
-        
+
         if self.is_selected {
             root.add_css_class("selected-seat");
         }
         root.set_child(Some(&container));
 
-        ListItemWidgets { root, delete_controller }
+        ListItemWidgets {
+            root,
+            delete_controller,
+        }
     }
 
     fn update(&mut self, msg: Self::Input, _sender: FactorySender<Self>) {

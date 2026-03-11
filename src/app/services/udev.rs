@@ -1,5 +1,5 @@
-use udev::{Device, Enumerator};
 use crate::app::services::logind::DEFAULT_SEAT;
+use udev::{Device, Enumerator};
 
 fn get_device_seat(device: &Device) -> &str {
     device
@@ -9,8 +9,8 @@ fn get_device_seat(device: &Device) -> &str {
 }
 
 pub fn get_seat_devices(target_seat: &str) -> Vec<Device> {
-    let mut enumerator = Enumerator::new()
-        .unwrap_or_else(|err| panic!("Couldn't create enumerator: {}", err));
+    let mut enumerator =
+        Enumerator::new().unwrap_or_else(|err| panic!("Couldn't create enumerator: {}", err));
 
     enumerator
         .match_tag("seat")

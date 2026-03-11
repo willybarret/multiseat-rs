@@ -84,7 +84,9 @@ impl SimpleComponent for App {
                 .forward(sender.input_sender(), |output| match output {
                     SidebarOutput::SelectSeat(target_seat) => AppInput::SelectSeat(target_seat),
                     SidebarOutput::OpenIdentifyDialog => AppInput::OpenIdentifyDialog,
-                    SidebarOutput::SeatDeleted(success, seat) => AppInput::SeatDeleteResult(success, seat),
+                    SidebarOutput::SeatDeleted(success, seat) => {
+                        AppInput::SeatDeleteResult(success, seat)
+                    }
                 });
 
         let content_controller = ContentModel::builder()
@@ -92,7 +94,9 @@ impl SimpleComponent for App {
             .forward(sender.input_sender(), |output| match output {
                 ContentOutput::CollapseSidebar => AppInput::CollapseSidebar,
                 ContentOutput::RefreshSeats => AppInput::RefreshSeats,
-                ContentOutput::DeviceSwitched(success, seat) => AppInput::DeviceSwitchResult(success, seat),
+                ContentOutput::DeviceSwitched(success, seat) => {
+                    AppInput::DeviceSwitchResult(success, seat)
+                }
             });
 
         let about_dialog_controller = AboutDialog::builder()
@@ -117,7 +121,7 @@ impl SimpleComponent for App {
 
         split_view.set_sidebar(Some(model.sidebar_controller.widget()));
         split_view.set_content(Some(model.content_controller.widget()));
-        
+
         toast_overlay.set_child(Some(&split_view));
         root.set_content(Some(&toast_overlay));
 
@@ -142,7 +146,9 @@ impl SimpleComponent for App {
 
             RelmAction::<FlushDevicesAction>::new_stateless(move |_| {
                 let success = logind::flush_devices().is_ok();
-                app_sender.send(AppInput::FlushDevicesResult(success)).unwrap_or_default();
+                app_sender
+                    .send(AppInput::FlushDevicesResult(success))
+                    .unwrap_or_default();
             })
         };
 
@@ -213,7 +219,8 @@ impl SimpleComponent for App {
                 self.toast_overlay.add_toast(toast);
             }
             AppInput::OpenIdentifyDialog => {
-                self.content_controller.emit(ContentInput::OpenIdentifyDialog);
+                self.content_controller
+                    .emit(ContentInput::OpenIdentifyDialog);
             }
         }
     }

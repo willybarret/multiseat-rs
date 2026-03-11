@@ -9,18 +9,14 @@ struct Connection {
 
 impl Connection {
     fn new() -> Self {
-        let connection = blocking::Connection::system()
-            .expect("Couldn't create D-Bus connection");
+        let connection = blocking::Connection::system().expect("Couldn't create D-Bus connection");
 
         Connection { inner: connection }
     }
 }
 
-fn get_manager(
-    connection: &blocking::Connection,
-) -> ManagerProxyBlocking<'_> {
-    ManagerProxyBlocking::new(connection)
-        .expect("Couldn't create manager proxy")
+fn get_manager(connection: &blocking::Connection) -> ManagerProxyBlocking<'_> {
+    ManagerProxyBlocking::new(connection).expect("Couldn't create manager proxy")
 }
 
 pub fn get_seats() -> Vec<SomePath> {

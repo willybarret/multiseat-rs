@@ -82,24 +82,22 @@ pub fn get_seat_devices(target_seat: &str) -> Vec<udev::Device> {
  */
 pub fn delete_seat(seat_id: String) -> bool {
     let devices = get_seat_devices(&seat_id);
-    
+
     let mut drm_devices = Vec::new();
     let mut other_devices = Vec::new();
-    
+
     for device in devices {
-        let subsystem = device.subsystem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("");
-        
+        let subsystem = device.subsystem().and_then(|s| s.to_str()).unwrap_or("");
+
         if subsystem == "drm" {
             drm_devices.push(device);
         } else {
             other_devices.push(device);
         }
     }
-    
+
     let mut all_ok = true;
-    
+
     for device in other_devices {
         if let Some(sys_path) = device.syspath().to_str() {
             if let Err(err) = services::logind::attach_device_to_seat(sys_path, DEFAULT_SEAT) {
@@ -108,7 +106,7 @@ pub fn delete_seat(seat_id: String) -> bool {
             }
         }
     }
-    
+
     for device in drm_devices {
         if let Some(sys_path) = device.syspath().to_str() {
             if let Err(err) = services::logind::attach_device_to_seat(sys_path, DEFAULT_SEAT) {
@@ -117,7 +115,7 @@ pub fn delete_seat(seat_id: String) -> bool {
             }
         }
     }
-    
+
     all_ok
 }
 

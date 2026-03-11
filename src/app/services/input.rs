@@ -27,12 +27,12 @@ pub struct IdentifiedDevice {
 fn find_usb_device_path(event_path: &PathBuf) -> Option<(String, String)> {
     let mut enumerator = Enumerator::new().ok()?;
     enumerator.match_subsystem("input").ok()?;
-    
+
     for device in enumerator.scan_devices().ok()? {
         if device.devnode() == Some(event_path.as_path()) {
             let fallback_path = device.syspath().to_string_lossy().to_string();
             let fallback_name = device.sysname().to_string_lossy().to_string();
-            
+
             let mut current = Some(device);
             while let Some(dev) = current {
                 if let Some(subsystem) = dev.subsystem() {
@@ -44,11 +44,11 @@ fn find_usb_device_path(event_path: &PathBuf) -> Option<(String, String)> {
                 }
                 current = dev.parent();
             }
-            
+
             return Some((fallback_path, fallback_name));
         }
     }
-    
+
     None
 }
 
@@ -63,16 +63,18 @@ pub fn identify_input_device(timeout_ms: u64) -> Option<IdentifiedDevice> {
     // Use udev to enumerate input event devices
     let mut enumerator = Enumerator::new().ok()?;
     enumerator.match_subsystem("input").ok()?;
-    
+
     let devices: Vec<_> = enumerator
         .scan_devices()
         .ok()?
         .filter_map(|dev| dev.devnode().map(|p| p.to_path_buf()))
-        .filter(|path| path.file_name()
-            .and_then(|n| n.to_str())
-            .map_or(false, |s| s.starts_with("event")))
+        .filter(|path| {
+            path.file_name()
+                .and_then(|n| n.to_str())
+                .map_or(false, |s| s.starts_with("event"))
+        })
         .collect();
-    
+
     if devices.is_empty() {
         return None;
     }
@@ -84,14 +86,12 @@ pub fn identify_input_device(timeout_ms: u64) -> Option<IdentifiedDevice> {
 
         thread::spawn(move || {
             let mut device = Device::open(&event_path).ok()?;
-            
-            let device_name = device.name()
-                .unwrap_or("Unknown Device")
-                .to_string();
-            
-            let (usb_path, usb_name) = find_usb_device_path(&event_path)
-                .unwrap_or_else(|| (String::new(), String::new()));
-            
+
+            let device_name = device.name().unwrap_or("Unknown Device").to_string();
+
+            let (usb_path, usb_name) =
+                find_usb_device_path(&event_path).unwrap_or_else(|| (String::new(), String::new()));
+
             loop {
                 if let Ok(events) = device.fetch_events() {
                     for event in events {
@@ -123,30 +123,28 @@ pub fn list_input_devices() -> Vec<(String, String)> {
         Ok(e) => e,
         Err(_) => return Vec::new(),
     };
-    
+
     if enumerator.match_subsystem("input").is_err() {
         return Vec::new();
     }
-    
+
     let devices = match enumerator.scan_devices() {
         Ok(d) => d,
         Err(_) => return Vec::new(),
     };
-    
+
     devices
         .filter_map(|dev| {
             let devnode = dev.devnode()?.to_path_buf();
             let filename = devnode.file_name()?.to_str()?;
-            
+
             if !filename.starts_with("event") {
                 return None;
             }
-            
+
             let evdev_device = Device::open(&devnode).ok()?;
-            let name = evdev_device.name()
-                .unwrap_or("Unknown Device")
-                .to_string();
-            
+            let name = evdev_device.name().unwrap_or("Unknown Device").to_string();
+
             Some((devnode.to_string_lossy().to_string(), name))
         })
         .collect()

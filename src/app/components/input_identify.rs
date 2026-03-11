@@ -1,9 +1,9 @@
 use crate::app::icons::GtkIcons;
 use crate::app::services::input::{self, IdentifiedDevice};
-use relm4::adw::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, WidgetExt};
-use relm4::{Component, ComponentParts, ComponentSender, RelmWidgetExt, adw, gtk};
 use gtk::gdk;
 use gtk::glib;
+use relm4::adw::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, WidgetExt};
+use relm4::{Component, ComponentParts, ComponentSender, RelmWidgetExt, adw, gtk};
 use std::thread;
 
 #[derive(Debug, Clone)]
@@ -54,32 +54,39 @@ impl Component for InputIdentifyDialog {
         match msg {
             IdentifyInput::StartListening => {
                 self.state = IdentifyState::Listening;
-                
+
                 sender.command(|out, shutdown| {
-                    shutdown.register(async move {
-                        // Running the process in a separate thread:
-                        let result = thread::spawn(|| {
-                            input::identify_input_device(10_000) // 10 second timeout
-                        }).join();
-                        
-                        match result {
-                            Ok(Some(device)) => {
-                                let _ = out.send(IdentifyWorkerOutput::Found(device));
+                    shutdown
+                        .register(async move {
+                            // Running the process in a separate thread:
+                            let result = thread::spawn(|| {
+                                input::identify_input_device(10_000) // 10 second timeout
+                            })
+                            .join();
+
+                            match result {
+                                Ok(Some(device)) => {
+                                    let _ = out.send(IdentifyWorkerOutput::Found(device));
+                                }
+                                Ok(None) => {
+                                    let _ = out.send(IdentifyWorkerOutput::Timeout);
+                                }
+                                Err(_) => {
+                                    let _ = out.send(IdentifyWorkerOutput::Error(
+                                        "Thread panicked".into(),
+                                    ));
+                                }
                             }
-                            Ok(None) => {
-                                let _ = out.send(IdentifyWorkerOutput::Timeout);
-                            }
-                            Err(_) => {
-                                let _ = out.send(IdentifyWorkerOutput::Error("Thread panicked".into()));
-                            }
-                        }
-                    }).drop_on_shutdown()
+                        })
+                        .drop_on_shutdown()
                 });
             }
             IdentifyInput::DeviceIdentified(device) => {
                 let usb_path = device.usb_device_path.clone();
                 self.state = IdentifyState::Found(device);
-                sender.output(IdentifyOutput::DeviceIdentified(usb_path)).unwrap_or_default();
+                sender
+                    .output(IdentifyOutput::DeviceIdentified(usb_path))
+                    .unwrap_or_default();
             }
             IdentifyInput::IdentificationFailed(error) => {
                 self.state = IdentifyState::Error(error);
@@ -96,19 +103,28 @@ impl Component for InputIdentifyDialog {
                     let usb_path = device.usb_device_path.clone();
                     root.close();
                     self.state = IdentifyState::Ready;
-                    sender.output(IdentifyOutput::SwitchDevice(usb_path)).unwrap_or_default();
+                    sender
+                        .output(IdentifyOutput::SwitchDevice(usb_path))
+                        .unwrap_or_default();
                 }
             }
         }
     }
 
-    fn update_cmd(&mut self, message: Self::CommandOutput, sender: ComponentSender<Self>, _root: &Self::Root) {
+    fn update_cmd(
+        &mut self,
+        message: Self::CommandOutput,
+        sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match message {
             IdentifyWorkerOutput::Found(device) => {
                 sender.input(IdentifyInput::DeviceIdentified(device));
             }
             IdentifyWorkerOutput::Timeout => {
-                sender.input(IdentifyInput::IdentificationFailed("Timeout: No input detected within 10 seconds".into()));
+                sender.input(IdentifyInput::IdentificationFailed(
+                    "Timeout: No input detected within 10 seconds".into(),
+                ));
             }
             IdentifyWorkerOutput::Error(msg) => {
                 sender.input(IdentifyInput::IdentificationFailed(msg));

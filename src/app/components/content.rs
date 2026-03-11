@@ -1,5 +1,5 @@
 use crate::app::components::device_card::{DeviceCard, DeviceCardOutput};
-use crate::app::components::input_identify::{InputIdentifyDialog, IdentifyOutput};
+use crate::app::components::input_identify::{IdentifyOutput, InputIdentifyDialog};
 use crate::app::icons::GtkIcons;
 use crate::app::services::logind::attach_device_to_seat;
 use crate::app::utils::filter_devices;
@@ -157,12 +157,8 @@ impl SimpleComponent for ContentModel {
             InputIdentifyDialog::builder()
                 .launch(())
                 .forward(sender.input_sender(), |output| match output {
-                    IdentifyOutput::DeviceIdentified(_usb_path) => {
-                        ContentInput::RefreshContent
-                    }
-                    IdentifyOutput::SwitchDevice(usb_path) => {
-                        ContentInput::AttachDevice(usb_path)
-                    }
+                    IdentifyOutput::DeviceIdentified(_usb_path) => ContentInput::RefreshContent,
+                    IdentifyOutput::SwitchDevice(usb_path) => ContentInput::AttachDevice(usb_path),
                 });
 
         let model = ContentModel {

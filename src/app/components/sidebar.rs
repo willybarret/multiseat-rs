@@ -9,8 +9,7 @@ use crate::app::{
 };
 use relm4::factory::FactoryVecDeque;
 use relm4::{
-    ComponentParts, ComponentSender, RelmWidgetExt,
-    SimpleComponent, adw,
+    ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent, adw,
     gtk::{
         self,
         prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt},
@@ -182,30 +181,34 @@ impl SimpleComponent for SidebarModel {
         match message {
             SidebarInput::SelectSeat(target_seat, _seat_variant) => {
                 self.selected_seat_id = target_seat.clone();
-                
-                self.primary_seats_factory.broadcast(ListItemInput::UpdateSelection(target_seat.clone()));
-                self.secondary_seats_factory.broadcast(ListItemInput::UpdateSelection(target_seat.clone()));
-                
+
+                self.primary_seats_factory
+                    .broadcast(ListItemInput::UpdateSelection(target_seat.clone()));
+                self.secondary_seats_factory
+                    .broadcast(ListItemInput::UpdateSelection(target_seat.clone()));
+
                 sender
                     .output(SidebarOutput::SelectSeat(target_seat))
                     .unwrap_or_default();
             }
             SidebarInput::DeleteSeat(seat_id) => {
                 let success = utils::delete_seat(seat_id.clone());
-                
+
                 sender
                     .output(SidebarOutput::SeatDeleted(success, seat_id.clone()))
                     .unwrap_or_default();
-                
+
                 if !success {
                     return;
                 }
 
                 self.selected_seat_id = DEFAULT_SEAT.to_string();
-                
-                self.primary_seats_factory.broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
-                self.secondary_seats_factory.broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
-                
+
+                self.primary_seats_factory
+                    .broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
+                self.secondary_seats_factory
+                    .broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
+
                 sender
                     .output(SidebarOutput::SelectSeat(DEFAULT_SEAT.into()))
                     .unwrap_or_default();
@@ -225,10 +228,12 @@ impl SimpleComponent for SidebarModel {
             }
             SidebarInput::ResetToDefault => {
                 self.selected_seat_id = DEFAULT_SEAT.to_string();
-                
-                self.primary_seats_factory.broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
-                self.secondary_seats_factory.broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
-                
+
+                self.primary_seats_factory
+                    .broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
+                self.secondary_seats_factory
+                    .broadcast(ListItemInput::UpdateSelection(DEFAULT_SEAT.to_string()));
+
                 sender
                     .output(SidebarOutput::SelectSeat(DEFAULT_SEAT.into()))
                     .unwrap_or_default();
