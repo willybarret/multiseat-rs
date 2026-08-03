@@ -1,0 +1,53 @@
+import { Palette } from "../theme.slint";
+
+export component Toast {
+    in property <string> message;
+    in property <bool> shown;
+    in property <length> parent-height;
+
+    toast-inner := Text {
+        visible: false;
+        text: root.message;
+        font-size: 13px;
+    }
+
+    width: min(toast-inner.preferred-width + 48px, 480px);
+    height: 40px;
+    opacity: shown ? 1.0 : 0.0;
+
+    y: shown
+        ? root.parent-height - self.height - 24px
+        : root.parent-height - self.height - 16px;
+
+    animate opacity {
+        duration: 180ms;
+        easing: ease;
+    }
+    animate y {
+        duration: 180ms;
+        easing: ease;
+    }
+
+    Rectangle {
+        border-radius: 10px;
+        background: Palette.surface-hi;
+        border-color: Palette.border-hi;
+        border-width: 1px;
+        drop-shadow-blur: 20px;
+        drop-shadow-color: #000000aa;
+
+        HorizontalLayout {
+            padding-left: 18px;
+            padding-right: 18px;
+
+            Text {
+                text: root.message;
+                color: Palette.text;
+                font-size: 13px;
+                vertical-alignment: center;
+                horizontal-alignment: center;
+                horizontal-stretch: 1;
+            }
+        }
+    }
+}

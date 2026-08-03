@@ -1,0 +1,20 @@
+export struct SeatItem {
+    id: string,
+    name: string,
+    is-primary: bool,
+}
+
+export struct DeviceItem {
+    sys-name: string,
+    vendor: string,
+    model: string,
+    path: string,
+    icon: string, // "gpu" | "sound" | "generic"
+    vendor-icon: string,
+}
+
+export struct SeatOption {
+    id: string,
+    name: string,
+    is-new: bool,
+}

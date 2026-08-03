@@ -1,0 +1,166 @@
+import { Palette }        from "theme.slint";
+import { SeatItem, DeviceItem, SeatOption } from "types.slint";
+
+import { Sidebar }        from "widgets/sidebar.slint";
+import { Content }        from "widgets/content.slint";
+import { MenuPopup }      from "widgets/menu_popup.slint";
+import { Toast }          from "widgets/toast.slint";
+
+import { AssignDialog }   from "dialogs/assign.slint";
+import { AboutDialog }    from "dialogs/about.slint";
+import { DeleteDialog }   from "dialogs/delete.slint";
+import { IdentifyDialog } from "dialogs/identify.slint";
+import { ResetDialog }    from "dialogs/reset.slint";
+
+export component AppWindow inherits Window {
+    title: "org.multiseat-rs.manager";
+    preferred-width: 1000px;
+    preferred-height: 680px;
+    min-width: 800px;
+    min-height: 560px;
+    // background: Palette.bg;
+    background: transparent;
+
+    // Data properties
+    in-out property <[SeatItem]> primary-seats;
+    in-out property <[SeatItem]> secondary-seats;
+    in-out property <[DeviceItem]> gpu-devices;
+    in-out property <[DeviceItem]> other-devices;
+    in-out property <bool> has-secondary-seats: false;
+    in-out property <string> selected-seat-id;
+
+    // Dialog visibility
+    in-out property <bool> delete-dialog-visible;
+    in-out property <string> delete-dialog-seat-id;
+    in-out property <bool> assign-dialog-visible;
+    in-out property <[SeatOption]> assign-options;
+    in-out property <string> assign-device-path;
+    in-out property <bool> identify-dialog-visible;
+    in-out property <int> identify-state;
+    in-out property <string> identify-found-name;
+    in-out property <string> identify-found-usb-name;
+    in-out property <string> identify-error;
+    in-out property <bool> about-dialog-visible;
+    in-out property <bool> reset-dialog-visible;
+    in-out property <string> toast-message;
+    in-out property <bool> toast-visible;
+
+    // Callbacks → Rust
+    callback select-seat(string);
+    callback delete-seat-confirmed(string);
+    callback refresh-all();
+    callback flush-devices();
+    callback switch-device(string);
+    callback assign-to-seat(string, string);
+    callback identify-start-listening();
+    callback identify-switch-to-seat();
+    callback open-identify-dialog();
+    callback open-about-dialog();
+
+    HorizontalLayout {
+        spacing: 0px;
+
+        sidebar := Sidebar {
+            width: 232px;
+            primary-seats: root.primary-seats;
+            secondary-seats: root.secondary-seats;
+            has-secondary-seats: root.has-secondary-seats;
+            selected-seat-id <=> root.selected-seat-id;
+
+            open-menu() => { menu-popup.show(); }
+
+            select-seat(id) => { root.select-seat(id); }
+
+            delete-seat(id) => {
+                root.delete-dialog-seat-id = id;
+                root.delete-dialog-visible = true;
+            }
+        }
+
+        Rectangle {
+            width: 1px;
+            background: Palette.border;
+        }
+
+        Content {
+            horizontal-stretch: 1;
+            gpu-devices: root.gpu-devices;
+            other-devices: root.other-devices;
+
+            open-identify-dialog() => root.open-identify-dialog();
+            refresh-all() => root.refresh-all();
+            switch-device(path) => root.switch-device(path);
+        }
+    }
+
+    menu-popup := MenuPopup {
+        width: 210px;
+        x: sidebar.width - self.width - 8px;
+        y: 52px;
+
+        about-dialog-visible <=> root.about-dialog-visible;
+        reset => { root.reset-dialog-visible = true; }
+    }
+
+    ResetDialog {
+        shown: root.reset-dialog-visible;
+        confirmed => {
+            root.flush-devices();
+            root.reset-dialog-visible = false;
+        }
+        cancelled => { root.reset-dialog-visible = false; }
+    }
+
+    DeleteDialog {
+        shown: root.delete-dialog-visible;
+        seat-id: root.delete-dialog-seat-id;
+        confirmed(id) => {
+            root.delete-dialog-visible = false;
+            root.delete-seat-confirmed(id);
+        }
+        cancelled => { root.delete-dialog-visible = false; }
+    }
+
+    AssignDialog {
+        shown: root.assign-dialog-visible;
+        options: root.assign-options;
+        device-path: root.assign-device-path;
+        seat-selected(seat-id) => {
+            root.assign-to-seat(root.assign-device-path, seat-id);
+            root.assign-dialog-visible = false;
+        }
+        cancelled => { root.assign-dialog-visible = false; }
+    }
+
+    IdentifyDialog {
+        shown: root.identify-dialog-visible;
+        state: root.identify-state;
+        found-name: root.identify-found-name;
+        found-usb-name: root.identify-found-usb-name;
+        error-msg: root.identify-error;
+
+        start-listening => { root.identify-start-listening(); }
+        close => {
+            root.identify-dialog-visible = false;
+            root.identify-state = 0;
+        }
+        reset => { root.identify-state = 0; }
+        switch-to-seat => {
+            root.identify-switch-to-seat();
+            root.identify-dialog-visible = false;
+            root.identify-state = 0;
+        }
+    }
+
+    AboutDialog {
+        shown: root.about-dialog-visible;
+        close => { root.about-dialog-visible = false; }
+    }
+
+    Toast {
+        x: (parent.width - self.width) / 2;
+        parent-height: parent.height;
+        message: root.toast-message;
+        shown: root.toast-visible;
+    }
+}

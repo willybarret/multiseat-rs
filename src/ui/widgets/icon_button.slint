@@ -1,0 +1,42 @@
+import { Palette } from "../theme.slint";
+
+export component IconBtn {
+    in property <image> icon;
+    in property <string> tooltip-text;
+    in property <color> tint:    Palette.text-dim;
+    in property <color> tint-hover: Palette.text;
+    in property <bool> enabled: true;
+    in property <bool> danger:  false;
+
+    callback clicked;
+
+    width: 32px;
+    height: 32px;
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        clicked => { root.clicked(); }
+    }
+
+    Rectangle {
+        border-radius: 8px;
+        background: touch.has-hover && root.enabled
+            ? (root.danger ? Palette.danger.with-alpha(0.15) : Palette.surface-hi)
+            : transparent;
+        animate background { duration: 100ms; }
+
+        Image {
+            width: 20px;
+            height: 20px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            source: root.icon;
+            colorize: !root.enabled ? Palette.text-dimmer
+                : root.danger && touch.has-hover ? Palette.danger-hi
+                : root.danger ? Palette.danger
+                : touch.has-hover ? root.tint-hover
+                : root.tint;
+            animate colorize { duration: 100ms; }
+        }
+    }
+}

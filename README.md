@@ -1,6 +1,6 @@
 # Multiseat Manager
 
-A blazingly fast, seamless multiseat manager for Linux, written in Rust using GTK4, libadwaita, logind, udev, and evdev.
+A blazingly fast, seamless multiseat manager for Linux, written in Rust using logind, udev, evdev and slint.
 
 Tested on Fedora Workstation 43 (Wayland GNOME 49.2) with `gdm` and `gnome-shell` packages patched.
 
@@ -64,21 +64,14 @@ Anyways, I'm going to drink some [Tereré](https://en.wikipedia.org/wiki/Terer%C
 
 ### Dependencies
 
-- GTK4 and libadwaita development libraries
 - libudev (part of systemd)
 
 On Fedora:
 ```bash
-sudo dnf install gtk4-devel libadwaita-devel systemd-devel
-```
-
-On Arch Linux:
-```bash
-sudo pacman -S gtk4 libadwaita
+sudo dnf install systemd-devel
 ```
 
 ### Running the App
-
 
 ```bash
 git clone https://github.com/willybarret/multiseat-rs.git
@@ -169,4 +162,3 @@ Contributions are welcome! Feel free to open issues or submit pull requests.
 ---
 
 Made with 🧉 and Rust
-

@@ -1,0 +1,210 @@
+import { ScrollView } from "std-widgets.slint";
+import { Palette } from "../theme.slint";
+import { SeatOption } from "../types.slint";
+import { Divider } from "../widgets/divider.slint";
+import { ScrollView } from "std-widgets.slint";
+import { Images } from "../images.slint";
+
+export component AssignDialog {
+    in property <bool> shown;
+    in property <[SeatOption]> options;
+    in property <string> device-path;
+
+    callback seat-selected(string);
+    callback cancelled;
+
+    if shown: Rectangle {
+        background: #00000088;
+
+        TouchArea {
+            clicked => { root.cancelled(); }
+        }
+
+        card := Rectangle {
+            width: 360px;
+            // height: min(inner.preferred-height + 48px, parent.height - 80px);
+            height: inner.preferred-height;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            border-radius: 14px;
+            background: Palette.surface;
+            border-color: Palette.border;
+            border-width: 1px;
+            drop-shadow-blur: 40px;
+            drop-shadow-color: #000000cc;
+            clip: true;
+
+            TouchArea { }
+
+            inner := VerticalLayout {
+                padding: 0px;
+                spacing: 0px;
+
+                // Header
+                Rectangle {
+                    height: 52px;
+
+                    HorizontalLayout {
+                        padding-left: 20px;
+                        padding-right: 14px;
+                        spacing: 8px;
+
+                        Text {
+                            text: "Move to Seat";
+                            color: Palette.text;
+                            font-size: 15px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                            horizontal-stretch: 1;
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+                            cl-t := TouchArea {
+                                width: 28px;
+                                height: 28px;
+                                clicked => { root.cancelled(); }
+
+                                Rectangle {
+                                    border-radius: 14px;
+                                    background: cl-t.has-hover ? Palette.surface-hi : transparent;
+                                    animate background { duration: 100ms; }
+
+                                    Image {
+                                        width: 18px;
+                                        height: 18px;
+                                        x: (parent.width - self.width) / 2;
+                                        y: (parent.height - self.height) / 2;
+                                        source: Images.close;
+                                        colorize: Palette.text-dim;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Divider { }
+
+                // Info notice
+                Rectangle {
+                    height: 40px;
+                    background: Palette.warning-bg;
+
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 8px;
+
+                        VerticalLayout {
+                            alignment: center;
+                            Image {
+                                width: 18px;
+                                height: 18px;
+                                source: Images.warn;
+                                colorize: Palette.warning-hi;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        Text {
+                            text: "Assign a GPU first to activate a new seat";
+                            color: Palette.text-dim;
+                            font-size: 13px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                            horizontal-stretch: 1;
+                        }
+                    }
+                }
+
+                Divider { }
+
+                // Seat list
+                ScrollView {
+                    height: min(options.length * 56px + 16px, 280px);
+
+                    VerticalLayout {
+                        padding: 8px;
+                        spacing: 2px;
+
+                        for opt in options: opt-t := TouchArea {
+                            height: 52px;
+                            clicked => { root.seat-selected(opt.id); }
+
+                            Rectangle {
+                                border-radius: 8px;
+                                background: opt-t.has-hover ? Palette.surface-hi : transparent;
+                                animate background { duration: 80ms; }
+
+                                HorizontalLayout {
+                                    padding-left: 12px;
+                                    padding-right: 12px;
+                                    spacing: 12px;
+
+                                    // Icon
+                                    VerticalLayout {
+                                        alignment: center;
+                                        width: 28px;
+
+                                        Rectangle {
+                                            width: 28px;
+                                            height: 28px;
+                                            border-radius: 8px;
+                                            background: opt.is-new
+                                                ? Palette.accent-dim
+                                                : Palette.surface-hi;
+
+                                            Image {
+                                                width: 18px;
+                                                height: 18px;
+                                                x: (parent.width - self.width) / 2;
+                                                y: (parent.height - self.height) / 2;
+                                                source: opt.is-new ? Images.seat-new : Images.seat;
+                                                colorize: opt.is-new ? Palette.accent : Palette.text-dimmer;
+                                            }
+                                        }
+                                    }
+
+                                    // Text
+                                    VerticalLayout {
+                                        spacing: 2px;
+                                        alignment: center;
+                                        horizontal-stretch: 1;
+
+                                        Text {
+                                            text: opt.name;
+                                            color: opt.is-new ? Palette.accent : Palette.text;
+                                            font-size: 13px;
+                                            font-weight: opt.is-new ? 600 : 400;
+                                            overflow: elide;
+                                        }
+
+                                        Text {
+                                            text: opt.id;
+                                            color: Palette.text-dimmer;
+                                            font-size: 11px;
+                                            overflow: elide;
+                                        }
+                                    }
+
+                                    // Chevron
+                                    VerticalLayout {
+                                        alignment: center;
+
+                                        Image {
+                                            width: 18px;
+                                            height: 18px;
+                                            source: Images.chevron;
+                                            colorize: opt-t.has-hover ? Palette.text-dim : Palette.text-dimmer;
+                                            animate colorize { duration: 80ms; }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

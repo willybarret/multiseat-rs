@@ -1,0 +1,78 @@
+import { Palette } from "../theme.slint";
+
+export component MenuPopup inherits PopupWindow {
+    in-out property <bool> about-dialog-visible;
+
+    callback reset();
+
+    Rectangle {
+        background: Palette.surface;
+        border-radius: 10px;
+        border-color: Palette.border-hi;
+        border-width: 1px;
+        drop-shadow-blur: 20px;
+        drop-shadow-color: #00000099;
+
+        VerticalLayout {
+            padding: 5px;
+            spacing: 1px;
+
+            mi-reset := TouchArea {
+                height: 34px;
+                clicked => { root.close(); root.reset(); }
+
+                Rectangle {
+                    border-radius: 7px;
+                    background: mi-reset.has-hover ? Palette.surface-hi : transparent;
+                    animate background { duration: 80ms; }
+
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        spacing: 8px;
+
+                        Text {
+                            text: "Revert to System Defaults";
+                            color: mi-reset.has-hover ? Palette.text : Palette.text-dim;
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            animate color { duration: 80ms; }
+                        }
+                    }
+                }
+            }
+
+            // Thin divider between items
+            Rectangle {
+                height: 1px;
+                background: Palette.border;
+                x: 8px;
+                width: parent.width - 16px;
+            }
+
+            mi-about := TouchArea {
+                height: 34px;
+                clicked => { root.close(); root.about-dialog-visible = true; }
+
+                Rectangle {
+                    border-radius: 7px;
+                    background: mi-about.has-hover ? Palette.surface-hi : transparent;
+                    animate background { duration: 80ms; }
+
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+
+                        Text {
+                            text: "About";
+                            color: mi-about.has-hover ? Palette.text : Palette.text-dim;
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            animate color { duration: 80ms; }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

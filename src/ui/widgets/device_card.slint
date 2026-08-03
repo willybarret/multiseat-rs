@@ -1,0 +1,113 @@
+import { Palette } from "../theme.slint";
+import { DeviceItem } from "../types.slint";
+import { Images } from "../images.slint";
+
+export component DeviceCard {
+    in property <DeviceItem> device;
+    callback switch-clicked(string);
+
+    height: card-row.preferred-height + 28px;
+
+    Rectangle {
+        border-radius: 10px;
+        background: Palette.surface;
+        border-color: Palette.border;
+        border-width: 1px;
+
+        // Accent left-bar
+        Rectangle {
+            x: 0;
+            y: 8px;
+            width: 2px;
+            height: parent.height - 16px;
+            border-radius: 1px;
+            background: device.icon == "gpu"
+                ? Palette.accent
+                : device.icon == "sound"
+                ? Palette.success-hi
+                : Palette.border-hi;
+        }
+
+        card-row := HorizontalLayout {
+            padding-left: 18px;
+            padding-right: 16px;
+            padding-top: 14px;
+            padding-bottom: 14px;
+            spacing: 14px;
+
+            // Device type icon
+            VerticalLayout {
+                alignment: center;
+                width: 36px;
+
+                Image {
+                    width: 36px;
+                    height: 36px;
+                    x: (parent.width - self.width) / 2;
+                    source: device.icon == "gpu" ? Images.gpu
+                        : device.icon == "sound" ? Images.sound
+                        : Images.device;
+                    colorize: device.icon == "gpu" ? Palette.accent
+                        : device.icon == "sound" ? Palette.success-hi
+                        : Palette.text-dimmer;
+                }
+            }
+
+            // Info
+            VerticalLayout {
+                spacing: 3px;
+                alignment: center;
+                horizontal-stretch: 1;
+
+                Text {
+                    text: device.model != "" ? device.model : device.sys-name;
+                    color: Palette.text;
+                    font-size: 13px;
+                    font-weight: 600;
+                    overflow: elide;
+                }
+
+                Text {
+                    text: device.vendor != "" ? device.vendor : device.sys-name;
+                    color: Palette.text-dim;
+                    font-size: 12px;
+                    overflow: elide;
+                }
+
+                Text {
+                    text: device.path;
+                    color: Palette.text-dimmer;
+                    font-size: 11px;
+                    overflow: elide;
+                    letter-spacing: -0.1px;
+                }
+            }
+
+            // Switch button
+            VerticalLayout {
+                alignment: center;
+
+                sw-t := TouchArea {
+                    width: 74px;
+                    height: 28px;
+                    clicked => root.switch-clicked(device.path);
+
+                    Rectangle {
+                        border-radius: 7px;
+                        background: sw-t.has-hover ? Palette.accent-hi : Palette.accent;
+                        animate background { duration: 100ms; }
+
+                        Text {
+                            text: "Move to...";
+                            color: #ffffff;
+                            font-size: 12px;
+                            font-weight: 600;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

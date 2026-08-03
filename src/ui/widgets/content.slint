@@ -1,0 +1,183 @@
+import { IconBtn } from "icon_button.slint";
+import { Divider } from "divider.slint";
+import { ScrollView } from "std-widgets.slint";
+import { Palette } from "../theme.slint";
+import { DeviceCard } from "device_card.slint";
+import { DeviceItem } from "../types.slint";
+import { Images } from "../images.slint";
+
+export component Content inherits VerticalLayout {
+    horizontal-stretch: 1;
+    spacing: 0px;
+
+    in property <[DeviceItem]> gpu-devices;
+    in property <[DeviceItem]> other-devices;
+
+    callback open-identify-dialog();
+    callback refresh-all();
+    callback switch-device(string);
+
+    // Toolbar
+    Rectangle {
+        height: 52px;
+        background: Palette.bg;
+
+        HorizontalLayout {
+            padding-left: 20px;
+            padding-right: 12px;
+            spacing: 4px;
+
+            Text {
+                text: "Devices";
+                color: Palette.text;
+                font-size: 14px;
+                font-weight: 700;
+                vertical-alignment: center;
+                horizontal-stretch: 1;
+                letter-spacing: 0.2px;
+            }
+
+            VerticalLayout {
+                alignment: center;
+                IconBtn {
+                    icon: Images.refresh;
+                    tooltip-text: "Refresh devices";
+                    clicked => { root.refresh-all(); }
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                IconBtn {
+                    icon: Images.search;
+                    tooltip-text: "Identify input device";
+                    clicked => { root.open-identify-dialog(); }
+                }
+            }
+        }
+    }
+
+    Divider { }
+
+    // Scrollable device list
+    Rectangle {
+        background: Palette.bg;
+
+        ScrollView {
+            vertical-stretch: 1;
+
+            VerticalLayout {
+                padding: 24px;
+                spacing: 8px;
+                alignment: start;
+
+                // GPU section header
+                HorizontalLayout {
+                    spacing: 8px;
+                    padding-bottom: 4px;
+
+                    Rectangle {
+                        width: 2px;
+                        height: section-gpu-title.preferred-height;
+                        border-radius: 1px;
+                        background: Palette.accent;
+                    }
+
+                    section-gpu-title := Text {
+                        text: "Graphics";
+                        color: Palette.text;
+                        font-size: 14px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                    }
+                }
+
+                Text {
+                    text: "Processors assigned to this seat for rendering.";
+                    color: Palette.text-dimmer;
+                    font-size: 12px;
+                }
+
+                if gpu-devices.length == 0: Rectangle {
+                    height: 52px;
+                    border-radius: 8px;
+                    background: Palette.surface.with-alpha(0.5);
+                    border-color: Palette.border;
+                    border-width: 1px;
+
+                    Text {
+                        text: "No graphics devices on this seat";
+                        color: Palette.text-dimmer;
+                        font-size: 12px;
+                        font-italic: true;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                for dev in gpu-devices: DeviceCard {
+                    device: dev;
+                    switch-clicked(path) => root.switch-device(path);
+                }
+
+                // Spacer between sections
+                Rectangle {
+                    height: 16px;
+                }
+
+                // Additional devices section header
+                HorizontalLayout {
+                    spacing: 8px;
+                    padding-bottom: 4px;
+
+                    Rectangle {
+                        width: 2px;
+                        height: section-other-title.preferred-height;
+                        border-radius: 1px;
+                        background: Palette.success-hi;
+                    }
+
+                    section-other-title := Text {
+                        text: "Other Devices";
+                        color: Palette.text;
+                        font-size: 14px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                    }
+                }
+
+                Text {
+                    text: "Audio, input, and other hardware on this seat.";
+                    color: Palette.text-dimmer;
+                    font-size: 12px;
+                }
+
+                if other-devices.length == 0: Rectangle {
+                    height: 52px;
+                    border-radius: 8px;
+                    background: Palette.surface.with-alpha(0.5);
+                    border-color: Palette.border;
+                    border-width: 1px;
+
+                    Text {
+                        text: "No additional devices on this seat";
+                        color: Palette.text-dimmer;
+                        font-size: 12px;
+                        font-italic: true;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                for dev in other-devices: DeviceCard {
+                    device: dev;
+                    switch-clicked(path) => { root.switch-device(path); }
+                }
+
+                Rectangle {
+                    height: 24px;
+                }
+            }
+        }
+    }
+}

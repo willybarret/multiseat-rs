@@ -1,0 +1,123 @@
+import { Palette } from "../theme.slint";
+import { Images } from "../images.slint";
+
+export component ResetDialog {
+    in property <bool> shown;
+
+    callback confirmed;
+    callback cancelled;
+
+    if shown: Rectangle {
+        background: #00000088;
+
+        TouchArea {
+            clicked => { root.cancelled(); }
+        }
+
+        card := Rectangle {
+            width: 340px;
+            // height: card-col.preferred-height + 48px;
+            height: card-col.preferred-height;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            border-radius: 14px;
+            background: Palette.surface;
+            border-color: Palette.border;
+            border-width: 1px;
+            drop-shadow-blur: 40px;
+            drop-shadow-color: #000000cc;
+
+            TouchArea { }
+
+            card-col := VerticalLayout {
+                padding: 28px;
+                spacing: 14px;
+                alignment: start;
+
+                HorizontalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 52px;
+                        height: 52px;
+                        border-radius: 26px;
+                        background: Palette.warning-hi.with-alpha(0.12);
+
+                        Image {
+                            width: 24px;
+                            height: 24px;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                            source: Images.warn;
+                            colorize: Palette.warning-hi;
+                        }
+                    }
+                }
+
+                Text {
+                    text: "Revert to defaults?";
+                    color: Palette.text;
+                    font-size: 16px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                }
+
+                Text {
+                    text: "All device assignments and custom seats will be reset to the system defaults. This cannot be undone.";
+                    color: Palette.text-dim;
+                    font-size: 13px;
+                    horizontal-alignment: center;
+                    wrap: word-wrap;
+                }
+
+                Rectangle {
+                    height: 4px;
+                }
+
+                HorizontalLayout {
+                    spacing: 10px;
+
+                    cancel-t := TouchArea {
+                        height: 36px;
+                        horizontal-stretch: 1;
+                        clicked => { root.cancelled(); }
+
+                        Rectangle {
+                            border-radius: 8px;
+                            background: cancel-t.has-hover ? Palette.surface-hi : Palette.border;
+                            animate background { duration: 100ms; }
+
+                            Text {
+                                text: "Cancel";
+                                color: Palette.text;
+                                font-size: 13px;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+
+                    confirm-t := TouchArea {
+                        height: 36px;
+                        horizontal-stretch: 1;
+                        clicked => { root.confirmed(); }
+
+                        Rectangle {
+                            border-radius: 8px;
+                            background: confirm-t.has-hover ? Palette.warning-hi : Palette.warning;
+                            animate background { duration: 100ms; }
+
+                            Text {
+                                text: "Revert";
+                                color: #ffffff;
+                                font-size: 13px;
+                                font-weight: 700;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

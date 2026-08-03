@@ -1,0 +1,134 @@
+import { IconBtn } from "icon_button.slint";
+import { Divider } from "divider.slint";
+import { ScrollView, ListView } from "std-widgets.slint";
+import { SeatListItem } from "seat_list_item.slint";
+import { Palette } from "../theme.slint";
+import { SeatItem } from "../types.slint";
+import { Images } from "../images.slint";
+
+export component Sidebar inherits Rectangle {
+    in property <[SeatItem]> primary-seats;
+    in property <[SeatItem]> secondary-seats;
+    in property <bool> has-secondary-seats;
+
+    in-out property <string> selected-seat-id;
+
+    callback select-seat(string);
+    callback delete-seat(string);
+    callback open-menu();
+
+    background: Palette.sidebar-bg.transparentize(0.2);
+
+    VerticalLayout {
+        spacing: 0px;
+
+        // Header
+        Rectangle {
+            height: 52px;
+
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 8px;
+                spacing: 4px;
+
+                Text {
+                    text: "Seats";
+                    color: Palette.text;
+                    font-size: 14px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                    horizontal-stretch: 1;
+                    letter-spacing: 0.2px;
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    IconBtn {
+                        icon: Images.menu;
+                        tooltip-text: "Menu";
+                        clicked => { root.open-menu(); }
+                    }
+                }
+            }
+        }
+
+        Divider { }
+
+        // Primary seats
+        VerticalLayout {
+            padding-top: 12px;
+            padding-bottom: 8px;
+            padding-left: 8px;
+            padding-right: 8px;
+            spacing: 2px;
+
+            Text {
+                text: "PRIMARY";
+                color: Palette.text-dimmer;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 1.0px;
+            }
+
+            for seat in primary-seats: SeatListItem {
+                seat: seat;
+                selected: seat.id == root.selected-seat-id;
+                clicked(id) => {
+                    root.selected-seat-id = id;
+                    root.select-seat(id);
+                }
+                delete-clicked(id) => { root.delete-seat(id); }
+            }
+        }
+
+        Divider { }
+
+        // Secondary seats
+        VerticalLayout {
+            vertical-stretch: 1;
+            padding-top: 12px;
+            padding-bottom: 8px;
+            padding-left: 8px;
+            padding-right: 8px;
+            spacing: 2px;
+
+            Text {
+                text: "SECONDARY";
+                color: Palette.text-dimmer;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 1.0px;
+            }
+
+            if !root.has-secondary-seats: Rectangle {
+                height: 52px;
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: "No secondary seats";
+                        color: Palette.text-dimmer;
+                        font-size: 12px;
+                        horizontal-alignment: center;
+                        font-italic: true;
+                    }
+                }
+            }
+
+            ScrollView {
+                vertical-stretch: 1;
+                VerticalLayout {
+                    spacing: 2px;
+                    for seat in secondary-seats: SeatListItem {
+                        seat: seat;
+                        selected: seat.id == root.selected-seat-id;
+                        clicked(id) => {
+                            root.selected-seat-id = id;
+                            root.select-seat(id);
+                        }
+                        delete-clicked(id) => { root.delete-seat(id); }
+                    }
+                }
+            }
+        }
+    }
+}

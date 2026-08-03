@@ -1,4 +1,3 @@
-use crate::app::icons::GtkIcons;
 use crate::app::services::logind::DEFAULT_SEAT;
 use crate::app::services::{self};
 use convert_case::ccase;
@@ -23,16 +22,6 @@ pub enum DeviceVariant {
     GraphicsCard,
     SoundCard,
     GenericDevice,
-}
-
-impl DeviceVariant {
-    pub fn icon_name(&self) -> &'static str {
-        match self {
-            DeviceVariant::GraphicsCard => GtkIcons::GraphicsCard.as_str(),
-            DeviceVariant::SoundCard => GtkIcons::SoundCard.as_str(),
-            DeviceVariant::GenericDevice => GtkIcons::GenericDevice.as_str(),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]

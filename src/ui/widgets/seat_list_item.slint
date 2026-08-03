@@ -1,0 +1,100 @@
+import { Palette } from "../theme.slint";
+import { SeatItem } from "../types.slint";
+import { Images } from "../images.slint";
+
+export component SeatListItem {
+    in property <SeatItem> seat;
+    in property <bool> selected;
+
+    callback clicked(string);
+    callback delete-clicked(string);
+
+    height: 44px;
+
+    touch := TouchArea {
+        clicked => { root.clicked(seat.id); }
+    }
+
+    Rectangle {
+        border-radius: 8px;
+        background: selected ? Palette.accent-dim
+            : touch.has-hover ? Palette.surface-hi
+            : transparent;
+        border-color: selected ? Palette.accent-muted : transparent;
+        border-width: 1px;
+        animate background { duration: 100ms; }
+        animate border-color { duration: 100ms; }
+
+        HorizontalLayout {
+            padding-left: 10px;
+            padding-right: 6px;
+            spacing: 8px;
+
+            // Seat icon
+            VerticalLayout {
+                alignment: center;
+                width: 20px;
+
+                Image {
+                    width: 18px;
+                    height: 18px;
+                    source: Images.seat;
+                    colorize: selected ? Palette.accent : Palette.text-dimmer;
+                    animate colorize { duration: 100ms; }
+                }
+            }
+
+            Text {
+                text: seat.name;
+                color: selected ? Palette.text : Palette.text-dim;
+                font-size: 13px;
+                font-weight: selected ? 600 : 400;
+                vertical-alignment: center;
+                horizontal-stretch: 1;
+                overflow: elide;
+                animate color { duration: 100ms; }
+            }
+
+            // ID badge (only on hover or selected)
+            if touch.has-hover || selected: Rectangle {
+                width: id-label.preferred-width + 10px;
+                height: 18px;
+                border-radius: 4px;
+                background: selected ? Palette.accent-muted : Palette.surface;
+                y: (parent.height - self.height) / 2;
+
+                id-label := Text {
+                    text: seat.id;
+                    color: selected ? Palette.text-accent : Palette.text-dimmer;
+                    font-size: 10px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+
+            // Delete button (only for secondary seats)
+            if !seat.is-primary: del-t := TouchArea {
+                width: 28px;
+                height: 28px;
+                y: (parent.height - self.height) / 2;
+                clicked => { root.delete-clicked(seat.id); }
+
+                Rectangle {
+                    border-radius: 6px;
+                    background: del-t.has-hover ? Palette.danger.with-alpha(0.18) : transparent;
+                    animate background { duration: 100ms; }
+
+                    Image {
+                        width: 16px;
+                        height: 16px;
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                        source: Images.delete;
+                        colorize: del-t.has-hover ? Palette.danger-hi : Palette.text-dimmer;
+                        animate colorize { duration: 100ms; }
+                    }
+                }
+            }
+        }
+    }
+}

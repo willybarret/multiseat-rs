@@ -1,0 +1,145 @@
+import { ScrollView, Button, LineEdit } from "std-widgets.slint";
+import { SeatOption } from "../types.slint";
+import { Divider } from "../widgets/divider.slint";
+import { Palette } from "../theme.slint";
+import { Images } from "../images.slint";
+
+export component AboutDialog {
+    property <string> app-name:        "Multiseat Manager";
+    property <string> app-description: "A blazingly fast, seamless multiseat manager for Linux, written in Rust.";
+    property <string> app-version:     "0.10.0";
+    property <string> app-author:      "Willian Barreto";
+    property <string> app-website:     "https://github.com/willybarret/multiseat-rs";
+
+    in property <bool> shown;
+    callback close;
+
+    if shown: Rectangle {
+        background: #00000088;
+
+        outer-touch := TouchArea {
+            clicked => { root.close(); }
+        }
+
+        card := Rectangle {
+            width: 340px;
+            height: col.preferred-height + 56px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            border-radius: 16px;
+            background: Palette.surface;
+            border-color: Palette.border;
+            border-width: 1px;
+            drop-shadow-blur: 40px;
+            drop-shadow-color: #000000cc;
+
+            // Block outer click
+            TouchArea { }
+
+            col := VerticalLayout {
+                padding: 32px;
+                spacing: 10px;
+                alignment: center;
+
+                // App icon
+                HorizontalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 72px;
+                        height: 72px;
+                        border-radius: 20px;
+                        background: Palette.accent-dim;
+                        border-color: Palette.accent-muted;
+                        border-width: 1px;
+
+                        Image {
+                            width: 42px;
+                            height: 42px;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                            source: Images.app-icon;
+                            colorize: Palette.accent;
+                        }
+                    }
+                }
+
+                Rectangle {
+                    height: 4px;
+                }
+
+                Text {
+                    text: app-name;
+                    color: Palette.text;
+                    font-size: 20px;
+                    font-weight: 800;
+                    horizontal-alignment: center;
+                }
+
+                Text {
+                    text: "v" + app-version;
+                    color: Palette.text-dimmer;
+                    font-size: 11px;
+                    horizontal-alignment: center;
+                    letter-spacing: 0.5px;
+                }
+
+                Rectangle {
+                    height: 6px;
+                }
+
+                Text {
+                    text: app-description;
+                    color: Palette.text-dim;
+                    font-size: 13px;
+                    wrap: word-wrap;
+                    horizontal-alignment: center;
+                }
+
+                if app-author != "": Text {
+                    text: "by " + app-author;
+                    color: Palette.text-dimmer;
+                    font-size: 12px;
+                    horizontal-alignment: center;
+                }
+
+                if app-website != "": web-t := TouchArea {
+                    height: self.preferred-height;
+
+                    LineEdit {
+                        width: 100%;
+                        text: app-website;
+                        read-only: true;
+                        // color: web-t.has-hover ? Palette.text-accent : Palette.accent;
+                        font-size: 12px;
+                        horizontal-alignment: center;
+                        // animate color { duration: 100ms; }
+                    }
+                }
+
+                Rectangle {
+                    height: 10px;
+                }
+
+                btn-t := TouchArea {
+                    height: 38px;
+                    clicked => { root.close(); }
+
+                    Rectangle {
+                        border-radius: 9px;
+                        background: btn-t.has-hover ? Palette.accent-hi : Palette.accent;
+                        animate background { duration: 100ms; }
+
+                        Text {
+                            text: "Close";
+                            color: #ffffff;
+                            font-size: 13px;
+                            font-weight: 600;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

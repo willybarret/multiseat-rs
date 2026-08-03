@@ -1,0 +1,386 @@
+import { ScrollView } from "std-widgets.slint";
+import { Palette } from "../theme.slint";
+import { SeatOption } from "../types.slint";
+import { Divider } from "../widgets/divider.slint";
+import { Images } from "../images.slint";
+
+// states: 0 = idle, 1 = listening, 2 = found, 3 = error
+export component IdentifyDialog {
+    in property <bool> shown;
+    in property <int> state;
+    in property <string> found-name;
+    in property <string> found-usb-name;
+    in property <string> error-msg;
+
+    callback start-listening;
+    callback close;
+    callback reset;
+    callback switch-to-seat;
+
+    if shown: Rectangle {
+        background: #00000088;
+
+        TouchArea { }   // intentionally does NOT dismiss (must use close button)
+
+        card := Rectangle {
+            width: 400px;
+            height: dialog-col.preferred-height + 48px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            border-radius: 14px;
+            background: Palette.surface;
+            border-color: Palette.border;
+            border-width: 1px;
+            drop-shadow-blur: 40px;
+            drop-shadow-color: #000000cc;
+
+            dialog-col := VerticalLayout {
+                padding: 0px;
+                spacing: 0px;
+
+                // Header
+                Rectangle {
+                    height: 52px;
+
+                    HorizontalLayout {
+                        padding-left: 20px;
+                        padding-right: 14px;
+                        spacing: 8px;
+
+                        Text {
+                            text: "Identify Device";
+                            color: Palette.text;
+                            font-size: 15px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                            horizontal-stretch: 1;
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            cl-t := TouchArea {
+                                width: 28px;
+                                height: 28px;
+                                enabled: state != 1;
+                                clicked => { root.close(); }
+
+                                Rectangle {
+                                    border-radius: 14px;
+                                    background: cl-t.has-hover && state != 1
+                                        ? Palette.surface-hi
+                                        : transparent;
+                                    animate background { duration: 80ms; }
+
+                                    Image {
+                                        width: 18px;
+                                        height: 18px;
+                                        x: (parent.width - self.width) / 2;
+                                        y: (parent.height - self.height) / 2;
+                                        source: Images.close;
+                                        colorize: state == 1 ? Palette.text-dimmer : Palette.text-dim;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Divider { }
+
+                // Body
+                VerticalLayout {
+                    padding: 28px;
+                    spacing: 18px;
+                    alignment: center;
+
+                    if state == 0: VerticalLayout {
+                        spacing: 18px;
+                        alignment: center;
+
+                        HorizontalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 60px;
+                                height: 60px;
+                                border-radius: 30px;
+                                background: Palette.surface-hi;
+                                border-color: Palette.border;
+                                border-width: 1px;
+
+                                Image {
+                                    width: 28px;
+                                    height: 28px;
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                    source: Images.input;
+                                    colorize: Palette.text-dim;
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: "Press any key or use an input device to identify it.";
+                            color: Palette.text-dim;
+                            font-size: 13px;
+                            wrap: word-wrap;
+                            horizontal-alignment: center;
+                        }
+
+                        start-t := TouchArea {
+                            height: 38px;
+                            clicked => { root.start-listening(); }
+
+                            Rectangle {
+                                border-radius: 9px;
+                                background: start-t.has-hover ? Palette.accent-hi : Palette.accent;
+                                animate background { duration: 100ms; }
+
+                                Text {
+                                    text: "Start Listening";
+                                    color: #ffffff;
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+
+                    if state == 1: VerticalLayout {
+                        spacing: 16px;
+                        alignment: center;
+
+                        HorizontalLayout {
+                            alignment: center;
+
+                            pulse-ring := Rectangle {
+                                width: 60px;
+                                height: 60px;
+                                border-radius: 30px;
+                                background: Palette.accent-muted;
+                                animate background {
+                                    duration: 900ms;
+                                    iteration-count: -1;
+                                    easing: ease-in-out;
+                                }
+
+                                Image {
+                                    width: 26px;
+                                    height: 26px;
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                    source: Images.listen;
+                                    colorize: Palette.accent;
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: "Listening…";
+                            color: Palette.text;
+                            font-size: 15px;
+                            font-weight: 600;
+                            horizontal-alignment: center;
+                        }
+
+                        Text {
+                            text: "Press any key or gamepad button. Timeout in 10 s.";
+                            color: Palette.text-dim;
+                            font-size: 12px;
+                            wrap: word-wrap;
+                            horizontal-alignment: center;
+                        }
+                    }
+
+                    if state == 2: VerticalLayout {
+                        spacing: 14px;
+                        alignment: center;
+
+                        HorizontalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 52px;
+                                height: 52px;
+                                border-radius: 26px;
+                                background: Palette.success.with-alpha(0.14);
+
+                                Image {
+                                    width: 22px;
+                                    height: 22px;
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                    source: Images.check;
+                                    colorize: Palette.success-hi;
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: "Device identified";
+                            color: Palette.text;
+                            font-size: 15px;
+                            font-weight: 700;
+                            horizontal-alignment: center;
+                        }
+
+                        // Device info card
+                        Rectangle {
+                            border-radius: 10px;
+                            background: Palette.surface-hi;
+                            border-color: Palette.border;
+                            border-width: 1px;
+                            height: found-row.preferred-height + 24px;
+
+                            found-row := HorizontalLayout {
+                                padding: 14px;
+                                spacing: 12px;
+
+                                VerticalLayout {
+                                    alignment: center;
+
+                                    Rectangle {
+                                        width: 36px;
+                                        height: 36px;
+                                        border-radius: 8px;
+                                        background: Palette.surface;
+                                      // y calculation removed since the layout now handles it
+
+                                      Image {
+                                            width: 18px;
+                                            height: 18px;
+                                          // Absolute positioning works here because Rectangle is NOT a layout
+                                          x: (parent.width - self.width) / 2;
+                                            y: (parent.height - self.height) / 2;
+                                            source: Images.input;
+                                            colorize: Palette.text-dim;
+                                        }
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    spacing: 3px;
+                                    alignment: center;
+                                    horizontal-stretch: 1;
+
+                                    Text {
+                                        text: found-name;
+                                        color: Palette.text;
+                                        font-size: 13px;
+                                        font-weight: 600;
+                                        overflow: elide;
+                                    }
+
+                                    Text {
+                                        text: "USB: " + found-usb-name;
+                                        color: Palette.text-dimmer;
+                                        font-size: 11px;
+                                        overflow: elide;
+                                    }
+                                }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 10px;
+
+                            again-t := TouchArea {
+                                height: 36px;
+                                horizontal-stretch: 1;
+                                clicked => { root.reset(); }
+
+                                Rectangle {
+                                    border-radius: 8px;
+                                    background: again-t.has-hover ? Palette.surface-hi : Palette.border;
+                                    animate background { duration: 100ms; }
+
+                                    Text {
+                                        text: "Identify Another";
+                                        color: Palette.text;
+                                        font-size: 12px;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+
+                            move-t := TouchArea {
+                                height: 36px;
+                                horizontal-stretch: 1;
+                                clicked => { root.switch-to-seat(); }
+
+                                Rectangle {
+                                    border-radius: 8px;
+                                    background: move-t.has-hover ? Palette.accent-hi : Palette.accent;
+                                    animate background { duration: 100ms; }
+
+                                    Text {
+                                        text: "Move to Seat";
+                                        color: #ffffff;
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if state == 3: VerticalLayout {
+                        spacing: 16px;
+                        alignment: center;
+
+                        HorizontalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 52px;
+                                height: 52px;
+                                border-radius: 26px;
+                                background: Palette.warning-hi.with-alpha(0.12);
+
+                                Image {
+                                    width: 22px;
+                                    height: 22px;
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                    source: Images.error;
+                                    colorize: Palette.warning-hi;
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: error-msg;
+                            color: Palette.text-dim;
+                            font-size: 13px;
+                            wrap: word-wrap;
+                            horizontal-alignment: center;
+                        }
+
+                        retry-t := TouchArea {
+                            height: 38px;
+                            clicked => { root.reset(); }
+
+                            Rectangle {
+                                border-radius: 9px;
+                                background: retry-t.has-hover ? Palette.accent-hi : Palette.accent;
+                                animate background { duration: 100ms; }
+
+                                Text {
+                                    text: "Try Again";
+                                    color: #ffffff;
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
