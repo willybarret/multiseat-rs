@@ -16,8 +16,11 @@ logind-zbus = "5.3.2"
 zbus = "5.18.0"
 evdev = "0.13.2"
 udev = "0.9.3"
-slint = "1.17.1"
+slint = { version = "1.17.1", features = ["raw-window-handle-06"] }
 convert_case = "0.11.0"
+rfd = "0.17.2"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
 
 [build-dependencies]
 slint-build = "1.17.1"

@@ -2,6 +2,8 @@ pub mod services;
 pub mod utils;
 
 use crate::{AppWindow, DeviceItem, SeatItem, SeatOption};
+use rfd::FileDialog;
+use services::seat_configuration_persistence::SeatConfiguration;
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -45,6 +47,13 @@ fn show_toast(window: &AppWindow, msg: &str) {
             w.set_toast_visible(false);
         }
     });
+}
+
+fn open_configuration_file_selector_dialog(window: &AppWindow) -> FileDialog {
+    let parent = window.window().window_handle();
+    FileDialog::new()
+        .set_parent(&parent)
+        .add_filter("JSON", &["json"])
 }
 
 fn refresh_seats(window: &AppWindow) {
@@ -121,6 +130,65 @@ pub fn run(window: AppWindow) -> Result<(), slint::PlatformError> {
                 refresh_seats(&w);
                 refresh_devices(&w, &seat);
             }
+        });
+    }
+
+    // Callback: save configuration
+    {
+        let win = window.as_weak();
+        window.on_save_configuration(move || {
+            let Some(w) = win.upgrade() else {
+                return;
+            };
+            let Some(path) = open_configuration_file_selector_dialog(&w)
+                .set_title("Save Seat Configuration")
+                .set_file_name("seat-configuration.json")
+                .save_file()
+            else {
+                return;
+            };
+
+            let result = SeatConfiguration::capture().write(&path);
+            let message = match result {
+                Ok(()) => format!("Configuration saved to {}", path.display()),
+                Err(error) => format!("Failed to save configuration: {error}"),
+            };
+            show_toast(&w, &message);
+        });
+    }
+
+    // Callback: load configuration
+    {
+        let win = window.as_weak();
+        let state = Arc::clone(&state);
+        window.on_load_configuration(move || {
+            let Some(w) = win.upgrade() else {
+                return;
+            };
+            let Some(path) = open_configuration_file_selector_dialog(&w)
+                .set_title("Load Seat Configuration")
+                .pick_file()
+            else {
+                return;
+            };
+
+            let result =
+                SeatConfiguration::read(&path).and_then(|configuration| configuration.apply());
+
+            let default = services::logind::DEFAULT_SEAT.to_string();
+            state.lock().unwrap().selected_seat = default.clone();
+            w.set_selected_seat_id(SharedString::from(default.as_str()));
+            refresh_seats(&w);
+            refresh_devices(&w, &default);
+
+            let message = match result {
+                Ok(0) => "Loaded; reconnect devices or reboot to apply".to_string(),
+                Ok(skipped) => {
+                    format!("Loaded ({skipped} unavailable); reconnect devices or reboot")
+                }
+                Err(error) => format!("Failed to load configuration: {error}"),
+            };
+            show_toast(&w, &message);
         });
     }
 
