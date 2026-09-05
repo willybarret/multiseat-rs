@@ -2,6 +2,8 @@ pub mod services;
 pub mod utils;
 
 use crate::{AppWindow, DeviceItem, SeatItem, SeatOption};
+use rfd::FileDialog;
+use services::persistence::SeatConfig;
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -47,6 +49,14 @@ fn show_toast(window: &AppWindow, msg: &str) {
     });
 }
 
+fn config_dialog(window: &AppWindow) -> FileDialog {
+    let parent = window.window().window_handle();
+
+    FileDialog::new()
+        .set_parent(&parent)
+        .add_filter("JSON", &["json"])
+}
+
 fn refresh_seats(window: &AppWindow) {
     let seats = utils::get_seats();
 
@@ -78,6 +88,14 @@ fn refresh_devices(window: &AppWindow, seat_id: &str) {
     window.set_other_devices(ModelRc::new(VecModel::from(other_items)));
 }
 
+fn reset_to_default_seat(window: &AppWindow) -> String {
+    let default_seat = services::logind::DEFAULT_SEAT.to_string();
+    refresh_seats(window);
+    refresh_devices(window, &default_seat);
+    window.set_selected_seat_id(SharedString::from(default_seat.as_str()));
+    default_seat
+}
+
 struct AppState {
     selected_seat: String,
     pending_device_path: String,
@@ -85,11 +103,7 @@ struct AppState {
 }
 
 pub fn run(window: AppWindow) -> Result<(), slint::PlatformError> {
-    let default_seat = services::logind::DEFAULT_SEAT.to_string();
-
-    refresh_seats(&window);
-    refresh_devices(&window, &default_seat);
-    window.set_selected_seat_id(SharedString::from(default_seat.as_str()));
+    let default_seat = reset_to_default_seat(&window);
 
     let state = Arc::new(Mutex::new(AppState {
         selected_seat: default_seat.clone(),
@@ -121,6 +135,60 @@ pub fn run(window: AppWindow) -> Result<(), slint::PlatformError> {
                 refresh_seats(&w);
                 refresh_devices(&w, &seat);
             }
+        });
+    }
+
+    // Callback: save configuration
+    {
+        let win = window.as_weak();
+        window.on_save_configuration(move || {
+            let Some(w) = win.upgrade() else {
+                return;
+            };
+            let Some(path) = config_dialog(&w)
+                .set_title("Save seats")
+                .set_file_name("seats.json")
+                .save_file()
+            else {
+                return;
+            };
+
+            let result = SeatConfig::capture().write(&path);
+
+            let message = match result {
+                Ok(()) => format!("Configuration saved to:\n{}", path.display()),
+                Err(error) => format!("Failed to save configuration: {error}"),
+            };
+
+            show_toast(&w, &message);
+        });
+    }
+
+    // Callback: load configuration
+    {
+        let win = window.as_weak();
+        let state = Arc::clone(&state);
+        window.on_load_configuration(move || {
+            let Some(w) = win.upgrade() else {
+                return;
+            };
+            let Some(path) = config_dialog(&w).set_title("Load seats").pick_file() else {
+                return;
+            };
+
+            let result = SeatConfig::read(&path).and_then(|c| c.apply());
+            let default_seat = reset_to_default_seat(&w);
+            state.lock().unwrap().selected_seat = default_seat;
+
+            let message = match result {
+                Ok(0) => "Loaded! Reconnect devices or reboot to apply.".to_string(),
+                Ok(skipped) => {
+                    format!("Loaded ({skipped} unavailable)! Reconnect devices or reboot.")
+                }
+                Err(error) => format!("Failed to load configuration: {error}"),
+            };
+
+            show_toast(&w, &message);
         });
     }
 

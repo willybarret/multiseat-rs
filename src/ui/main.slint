@@ -56,6 +56,8 @@ export component AppWindow inherits Window {
     callback identify-switch-to-seat();
     callback open-identify-dialog();
     callback open-about-dialog();
+    callback save-configuration();
+    callback load-configuration();
 
     HorizontalLayout {
         spacing: 0px;
@@ -100,6 +102,8 @@ export component AppWindow inherits Window {
 
         about-dialog-visible <=> root.about-dialog-visible;
         reset => { root.reset-dialog-visible = true; }
+        save-configuration => { root.save-configuration(); }
+        load-configuration => { root.load-configuration(); }
     }
 
     ResetDialog {

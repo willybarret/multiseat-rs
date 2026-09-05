@@ -3,6 +3,8 @@ import { Palette } from "../theme.slint";
 export component MenuPopup inherits PopupWindow {
     in-out property <bool> about-dialog-visible;
 
+    callback save-configuration();
+    callback load-configuration();
     callback reset();
 
     Rectangle {
@@ -16,6 +18,54 @@ export component MenuPopup inherits PopupWindow {
         VerticalLayout {
             padding: 5px;
             spacing: 1px;
+
+            mi-save := TouchArea {
+                height: 34px;
+                clicked => { root.close(); root.save-configuration(); }
+
+                Rectangle {
+                    border-radius: 7px;
+                    background: mi-save.has-hover ? Palette.surface-hi : transparent;
+                    animate background { duration: 80ms; }
+
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+
+                        Text {
+                            text: "Save Configuration";
+                            color: mi-save.has-hover ? Palette.text : Palette.text-dim;
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            animate color { duration: 80ms; }
+                        }
+                    }
+                }
+            }
+
+            mi-load := TouchArea {
+                height: 34px;
+                clicked => { root.close(); root.load-configuration(); }
+
+                Rectangle {
+                    border-radius: 7px;
+                    background: mi-load.has-hover ? Palette.surface-hi : transparent;
+                    animate background { duration: 80ms; }
+
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+
+                        Text {
+                            text: "Load Configuration";
+                            color: mi-load.has-hover ? Palette.text : Palette.text-dim;
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            animate color { duration: 80ms; }
+                        }
+                    }
+                }
+            }
 
             mi-reset := TouchArea {
                 height: 34px;

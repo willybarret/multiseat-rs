@@ -8,7 +8,7 @@ fn get_device_seat(device: &Device) -> &str {
         .unwrap_or(DEFAULT_SEAT)
 }
 
-pub fn get_seat_devices(target_seat: &str) -> Vec<Device> {
+pub fn get_devices() -> Vec<Device> {
     let mut enumerator =
         Enumerator::new().unwrap_or_else(|err| panic!("Couldn't create enumerator: {}", err));
 
@@ -16,13 +16,15 @@ pub fn get_seat_devices(target_seat: &str) -> Vec<Device> {
         .match_tag("seat")
         .unwrap_or_else(|err| panic!("Couldn't match 'seat' tag: {}", err));
 
-    let devices = enumerator
+    enumerator
         .scan_devices()
-        .unwrap_or_else(|err| panic!("Couldn't scan devices: {}", err));
+        .unwrap_or_else(|err| panic!("Couldn't scan devices: {}", err))
+        .collect()
+}
 
-    let devices: Vec<_> = devices
+pub fn get_seat_devices(target_seat: &str) -> Vec<Device> {
+    get_devices()
+        .into_iter()
         .filter(|d| target_seat == get_device_seat(d))
-        .collect();
-
-    devices
+        .collect()
 }
