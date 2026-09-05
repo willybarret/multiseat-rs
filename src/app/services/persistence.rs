@@ -5,7 +5,7 @@ use std::fs;
 use std::path::Path;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct SeatConfiguration {
+pub struct SeatConfig {
     pub seats: Vec<SeatAssignment>,
 }
 
@@ -15,7 +15,7 @@ pub struct SeatAssignment {
     pub devices: Vec<String>,
 }
 
-impl SeatConfiguration {
+impl SeatConfig {
     pub fn capture() -> Self {
         let mut seats: Vec<_> = utils::get_seats()
             .into_iter()
@@ -48,7 +48,7 @@ impl SeatConfiguration {
 
     pub fn apply(&self) -> Result<usize, String> {
         let available_paths = map_device_paths(udev_service::get_devices());
-        let (resolved_seats, skipped) = self.map_available_device_paths(&available_paths);
+        let (resolved_seats, mut skipped) = self.map_available_device_paths(&available_paths);
         let saved_device_count: usize = self.seats.iter().map(|seat| seat.devices.len()).sum();
 
         if saved_device_count > 0 && resolved_seats.iter().all(|(_, devices)| devices.is_empty()) {
@@ -57,11 +57,18 @@ impl SeatConfiguration {
 
         logind::flush_devices().map_err(|error| error.to_string())?;
 
+        let mut attached = 0;
         for (seat_id, devices) in resolved_seats {
             for device_path in devices {
-                logind::attach_device_to_seat(&device_path, &seat_id)
-                    .map_err(|error| error.to_string())?;
+                match logind::attach_device_to_seat(&device_path, &seat_id) {
+                    Ok(()) => attached += 1,
+                    Err(_) => skipped += 1,
+                }
             }
+        }
+
+        if saved_device_count > 0 && attached == 0 {
+            return Err("None of the saved devices could be attached".to_string());
         }
 
         Ok(skipped)

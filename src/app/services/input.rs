@@ -35,13 +35,12 @@ fn find_usb_device_path(event_path: &PathBuf) -> Option<(String, String)> {
 
             let mut current = Some(device);
             while let Some(dev) = current {
-                if let Some(subsystem) = dev.subsystem() {
-                    if subsystem == "usb" && dev.devtype().map_or(false, |dt| dt == "usb_device") {
+                if let Some(subsystem) = dev.subsystem()
+                    && subsystem == "usb" && dev.devtype().is_some_and(|dt| dt == "usb_device") {
                         let path = dev.syspath().to_string_lossy().to_string();
                         let name = dev.sysname().to_string_lossy().to_string();
                         return Some((path, name));
                     }
-                }
                 current = dev.parent();
             }
 
@@ -71,7 +70,7 @@ pub fn identify_input_device(timeout_ms: u64) -> Option<IdentifiedDevice> {
         .filter(|path| {
             path.file_name()
                 .and_then(|n| n.to_str())
-                .map_or(false, |s| s.starts_with("event"))
+                .is_some_and(|s| s.starts_with("event"))
         })
         .collect();
 
